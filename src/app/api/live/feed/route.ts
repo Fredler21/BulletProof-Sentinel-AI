@@ -48,12 +48,26 @@ function approxLatLon(geo: GeoInfo | undefined): { lat: number; lon: number } | 
   return null;
 }
 
+// Deterministic synthetic coordinates derived from an IP string. Used as a
+// last-resort so local/private/unknown IPs still render on the world map
+// during development instead of vanishing.
+function synthCoords(ip: string): { lat: number; lon: number } {
+  let h = 2166136261;
+  for (let i = 0; i < ip.length; i++) {
+    h ^= ip.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const lat = ((h >>> 0) % 14000) / 100 - 60; // -60..80
+  const lon = (((h >> 8) >>> 0) % 36000) / 100 - 180; // -180..180
+  return { lat, lon };
+}
+
 export async function GET(req: Request): Promise<NextResponse> {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "auth" }, { status: 401 });
 
   const url = new URL(req.url);
-  const limit = Math.min(Number(url.searchParams.get("limit") ?? 40), 100);
+  const limit = Math.min(Number(url.searchParams.get("limit") ?? 40), 200);
 
   const snap = await adminDb
     .collection("security_events")
@@ -83,7 +97,7 @@ export async function GET(req: Request): Promise<NextResponse> {
               org: geo.org,
             }
           : null,
-        coords: approxLatLon(geo),
+        coords: approxLatLon(geo) ?? (e.ip ? synthCoords(e.ip) : null),
       };
     });
 

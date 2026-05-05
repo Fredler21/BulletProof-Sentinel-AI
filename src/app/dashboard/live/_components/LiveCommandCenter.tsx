@@ -16,6 +16,7 @@ import { HeatmapGrid } from "./HeatmapGrid";
 import { TerminalConsole } from "./TerminalConsole";
 import { IncidentResponsePanel } from "./IncidentResponsePanel";
 import { FloatingAlerts } from "./FloatingAlerts";
+import { SuspiciousIpTracker } from "./SuspiciousIpTracker";
 
 export interface LiveStats {
   activeAttackers: number;
@@ -119,6 +120,9 @@ export function LiveCommandCenter(): React.ReactElement {
         <AttackTimeline items={items} />
         <HeatmapGrid items={items} />
       </div>
+
+      {/* Row 3.5: Suspicious IP Tracker (full width) */}
+      <SuspiciousIpTracker items={items} />
 
       {/* Row 4: Terminal + Incident Response */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
