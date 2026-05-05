@@ -32,12 +32,12 @@ export function LiveFeed({
   }, [items]);
 
   return (
-    <div className="relative h-[440px] overflow-hidden rounded-lg border border-neon-pink/30 bg-black/60 shadow-neon-pink">
-      <div className="flex items-center justify-between border-b border-neon-pink/30 bg-black/60 px-3 py-2">
-        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-pink">
+    <div className="glass holo-border hud-frame scanlines relative h-[440px] overflow-hidden rounded-2xl">
+      <div className="flex items-center justify-between border-b border-white/5 bg-black/40 px-4 py-2">
+        <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-neon-pink">
           ▎LIVE THREAT FEED
         </p>
-        <span className="font-mono text-[10px] text-slate-400">
+        <span className="font-mono text-[9px] uppercase tracking-widest text-slate-400">
           {items.length} events
         </span>
       </div>

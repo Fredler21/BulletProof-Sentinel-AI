@@ -48,16 +48,16 @@ export function HoneypotSessions({
   const sessions = useMemo(() => buildSessions(items), [items]);
 
   return (
-    <div className="relative h-[360px] overflow-hidden rounded-lg border border-neon-green/30 bg-black/70 shadow-neon-green">
-      <div className="flex items-center justify-between border-b border-neon-green/30 bg-black/60 px-3 py-2">
-        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-green">
+    <div className="glass holo-border hud-frame scanlines relative h-[440px] overflow-hidden rounded-2xl">
+      <div className="flex items-center justify-between border-b border-white/5 bg-black/40 px-4 py-2">
+        <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-neon-green">
           ▎HONEYPOT SESSION MONITOR
         </p>
-        <span className="animate-flicker font-mono text-[10px] text-neon-green">
+        <span className="animate-flicker font-mono text-[9px] uppercase tracking-widest text-neon-green">
           ● rec
         </span>
       </div>
-      <div className="grid h-[320px] grid-cols-1 gap-2 overflow-y-auto p-2 md:grid-cols-2">
+      <div className="grid h-[400px] grid-cols-1 gap-2 overflow-y-auto p-2 md:grid-cols-2">
         {sessions.map((s) => (
           <div
             key={s.ip}

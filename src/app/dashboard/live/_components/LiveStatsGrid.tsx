@@ -64,18 +64,19 @@ function StatCard({
   const display = useAnimatedNumber(value);
   return (
     <div
-      className={`relative overflow-hidden rounded-lg border bg-black/50 p-3 ${COLOR_CLASS[color]}`}
+      className={`glass hud-frame relative overflow-hidden rounded-xl border p-3 ${COLOR_CLASS[color]}`}
     >
       <div className="pointer-events-none absolute inset-0 opacity-30">
         <div className="absolute inset-x-0 top-0 h-px animate-scanline bg-current" />
       </div>
-      <p className="font-mono text-[10px] uppercase tracking-[0.25em] opacity-70">
+      <p className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-80">
         {label}
       </p>
       <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
         {value === null ? "···" : display}
         {unit && <span className="ml-1 text-xs opacity-60">{unit}</span>}
       </p>
+      <div className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-current to-transparent opacity-40" />
     </div>
   );
 }
