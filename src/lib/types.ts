@@ -114,3 +114,47 @@ export interface GeoInfo {
   asn: string | null;
   cachedAt: number;
 }
+
+// ---------- Phase 3 — AI Copilot ----------
+
+export interface MitreMapping {
+  tacticId: string; // e.g. "TA0001"
+  tacticName: string; // e.g. "Initial Access"
+  techniqueId: string; // e.g. "T1078"
+  techniqueName: string; // e.g. "Valid Accounts"
+}
+
+export interface ThreatExplanation {
+  eventId: string;
+  summary: string; // 1-2 sentences in plain English
+  whyItMatters: string;
+  recommendedActions: string[];
+  severity: ThreatSeverity;
+  mitre: MitreMapping[];
+  model: string; // model used or "stub"
+  createdAt: number;
+}
+
+export type ChatRole = "user" | "assistant" | "system";
+
+export interface ChatMessage {
+  role: ChatRole;
+  content: string;
+}
+
+export type IncidentReportScope = "executive" | "technical";
+
+export interface IncidentReport {
+  id: string;
+  ownerUid: string;
+  scope: IncidentReportScope;
+  title: string;
+  rangeFrom: number; // ms epoch
+  rangeTo: number; // ms epoch
+  body: string; // markdown
+  eventCount: number;
+  scanCount: number;
+  highCriticalCount: number;
+  model: string;
+  createdAt: number;
+}

@@ -24,3 +24,45 @@ body {
   background: #1f2a44;
   border-radius: 4px;
 }
+
+.report-body h1,
+.report-body h2,
+.report-body h3 {
+  color: #f1f5f9;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.report-body h1 { font-size: 1.5rem; }
+.report-body h2 { font-size: 1.15rem; border-top: 1px solid #1f2a44; padding-top: 1rem; }
+.report-body h3 { font-size: 1rem; }
+.report-body p { color: #cbd5e1; margin: 0.5rem 0; line-height: 1.6; }
+.report-body ul, .report-body ol { margin: 0.5rem 0 0.5rem 1.25rem; color: #cbd5e1; }
+.report-body ul { list-style: disc; }
+.report-body ol { list-style: decimal; }
+.report-body li { margin: 0.25rem 0; line-height: 1.55; }
+.report-body strong { color: #f1f5f9; }
+.report-body a { color: #22d3ee; text-decoration: underline; }
+.report-body code {
+  background: #0a0f1c;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  color: #67e8f9;
+}
+.report-body pre {
+  background: #0a0f1c;
+  border: 1px solid #1f2a44;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+.report-body pre code { background: transparent; padding: 0; color: #e2e8f0; }
+.report-body blockquote {
+  border-left: 3px solid #22d3ee;
+  padding-left: 0.75rem;
+  color: #94a3b8;
+  margin: 0.75rem 0;
+}
+.report-body hr { border: 0; border-top: 1px solid #1f2a44; margin: 1rem 0; }
