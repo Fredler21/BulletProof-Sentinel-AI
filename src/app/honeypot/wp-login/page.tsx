@@ -1,33 +1,52 @@
 import { headers } from "next/headers";
 import { triggerTrap } from "@/lib/server/honeypots";
+import { isIpBlocked } from "@/lib/server/blocklist";
 
 export const dynamic = "force-dynamic";
 
+function clientIp(h: Headers): string | null {
+  return (
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    h.get("x-real-ip") ??
+    null
+  );
+}
 
-export default async function WpLoginHoneypot(): Promise<React.ReactElement> {
+export default async function HoneypotWpLoginPage(): Promise<React.ReactElement> {
   const h = await headers();
+  const ip = clientIp(h);
+  if (await isIpBlocked(ip)) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-16 text-slate-200">
+        <div className="max-w-md text-center">
+          <h1 className="text-2xl font-semibold text-white">403 — Access Denied</h1>
+          <p className="mt-2 text-sm text-slate-400">
+            Your IP address has been blocked.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   await triggerTrap("/honeypot/wp-login", {
-    ip:
-      h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      h.get("x-real-ip") ??
-      null,
+    ip,
     userAgent: h.get("user-agent"),
     method: "GET",
   });
   return (
-    <main className="flex min-h-screen items-center justify-center bg-white px-6 py-16 text-slate-900">
-      <div className="w-full max-w-sm rounded border border-slate-200 bg-white p-6 shadow">
+    <main className="flex min-h-screen items-center justify-center bg-[#f1f1f1] px-6 py-16 text-slate-900">
+      <div className="w-full max-w-sm rounded-md border border-slate-300 bg-white p-6 shadow">
         <h1 className="text-center text-lg font-semibold">WordPress</h1>
         <form className="mt-5 space-y-3" action="#" method="post">
           <input
             type="text"
-            placeholder="Username or Email"
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            placeholder="Username or Email Address"
+            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm"
           />
           <input
             type="password"
             placeholder="Password"
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm"
           />
           <button
             type="submit"

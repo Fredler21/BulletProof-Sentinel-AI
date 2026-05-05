@@ -30,6 +30,7 @@ export default async function DashboardLayout({
           <NavLink href="/dashboard/scanner" label="Scanner" />
           <NavLink href="/dashboard/honeypots" label="Honeypots" />
           <NavLink href="/dashboard/alerts" label="Alerts" />
+          <NavLink href="/dashboard/blocklist" label="Blocklist" />
           <NavLink href="/dashboard/copilot" label="AI Copilot" />
           <NavLink href="/dashboard/reports" label="Reports" />
         </nav>

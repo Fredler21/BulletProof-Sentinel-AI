@@ -1,4 +1,5 @@
 import { adminDb } from "@/lib/firebase/admin";
+import { applyAutoRules } from "@/lib/server/autoRules";
 import type {
   AlertItem,
   SecurityEvent,
@@ -43,6 +44,13 @@ export async function recordSecurityEvent(
     await createAlertFromEvent(event);
   }
 
+  // Best-effort: run autonomous response rules (auto-block, etc.)
+  try {
+    await applyAutoRules(event);
+  } catch {
+    /* never block event recording */
+  }
+
   return event;
 }
 
@@ -65,6 +73,10 @@ async function createAlertFromEvent(event: SecurityEvent): Promise<void> {
     createdAt: event.createdAt,
     acknowledged: false,
     eventId: event.id,
+    status: "open",
+    assigneeUid: null,
+    assigneeName: null,
+    notesCount: 0,
   };
   await doc.set(alert);
 }

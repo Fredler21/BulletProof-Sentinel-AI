@@ -39,6 +39,10 @@ export interface AlertItem {
   createdAt: number;
   acknowledged: boolean;
   eventId: string | null;
+  status?: AlertStatus;
+  assigneeUid?: string | null;
+  assigneeName?: string | null;
+  notesCount?: number;
 }
 
 export interface DashboardStats {
@@ -156,5 +160,35 @@ export interface IncidentReport {
   scanCount: number;
   highCriticalCount: number;
   model: string;
+  createdAt: number;
+}
+
+// ---------- Phase 4 — Autonomous Operations & Collaboration ----------
+
+export type BlockSource =
+  | "manual"
+  | "auto.honeypot.flood"
+  | "auto.scan.exposure"
+  | "auto.auth.bruteforce";
+
+export interface BlockedIp {
+  ip: string;
+  reason: string;
+  source: BlockSource;
+  createdByUid: string | null;
+  createdAt: number;
+  expiresAt: number | null; // null = permanent
+  hits: number; // number of subsequent attempts after block
+  lastAttemptAt: number | null;
+}
+
+export type AlertStatus = "open" | "investigating" | "resolved";
+
+export interface AlertNote {
+  id: string;
+  alertId: string;
+  authorUid: string;
+  authorName: string | null;
+  body: string;
   createdAt: number;
 }

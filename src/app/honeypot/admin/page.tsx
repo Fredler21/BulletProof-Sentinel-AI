@@ -1,23 +1,40 @@
 import { headers } from "next/headers";
 import { triggerTrap } from "@/lib/server/honeypots";
+import { isIpBlocked } from "@/lib/server/blocklist";
 
 export const dynamic = "force-dynamic";
 
+function clientIp(h: Headers): string | null {
+  return (
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    h.get("x-real-ip") ??
+    null
+  );
+}
 
-async function record(path: string): Promise<void> {
-  const h = await headers();
-  await triggerTrap(path, {
-    ip:
-      h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      h.get("x-real-ip") ??
-      null,
-    userAgent: h.get("user-agent"),
-    method: "GET",
-  });
+function BlockedScreen(): React.ReactElement {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-16 text-slate-200">
+      <div className="max-w-md text-center">
+        <h1 className="text-2xl font-semibold text-white">403 — Access Denied</h1>
+        <p className="mt-2 text-sm text-slate-400">
+          Your IP address has been blocked by Sentinel AI for suspicious activity.
+        </p>
+      </div>
+    </main>
+  );
 }
 
 export default async function HoneypotAdminPage(): Promise<React.ReactElement> {
-  await record("/honeypot/admin");
+  const h = await headers();
+  const ip = clientIp(h);
+  if (await isIpBlocked(ip)) return <BlockedScreen />;
+
+  await triggerTrap("/honeypot/admin", {
+    ip,
+    userAgent: h.get("user-agent"),
+    method: "GET",
+  });
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-16 text-slate-200">
       <div className="w-full max-w-sm rounded-md border border-slate-800 bg-slate-900 p-6">
