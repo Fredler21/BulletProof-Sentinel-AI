@@ -28,6 +28,16 @@ export default async function DashboardLayout({
           </p>
         </div>
         <nav className="space-y-1 text-sm">
+          <Link
+            href="/dashboard/live"
+            className="mb-2 flex items-center justify-between rounded-md border border-neon-cyan/30 bg-black/40 px-3 py-2 font-mono text-xs uppercase tracking-widest text-neon-cyan shadow-neon-cyan hover:bg-neon-cyan/10"
+          >
+            <span>▌ Live Console</span>
+            <span className="relative inline-flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-neon-green/70" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-neon-green" />
+            </span>
+          </Link>
           <NavLink href="/dashboard" label="Overview" />
           <NavLink href="/dashboard/events" label="Security Events" />
           <NavLink href="/dashboard/incidents" label="Incidents" />
