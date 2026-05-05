@@ -192,3 +192,80 @@ export interface AlertNote {
   body: string;
   createdAt: number;
 }
+
+// ---------- Phase 5 — Enterprise Ecosystem ----------
+
+export type UserRole =
+  | "super-admin"
+  | "security-analyst"
+  | "it-admin"
+  | "viewer";
+
+export interface UserRoleDoc {
+  uid: string;
+  email: string | null;
+  role: UserRole;
+  assignedByUid: string | null;
+  updatedAt: number;
+}
+
+export interface ThreatIncident {
+  id: string;
+  title: string;
+  ip: string | null;
+  severity: ThreatSeverity;
+  eventCount: number;
+  eventTypes: SecurityEventType[];
+  firstSeenAt: number;
+  lastSeenAt: number;
+  routes: string[];
+  eventIds: string[];
+  status: "active" | "contained" | "closed";
+  notes?: string | null;
+}
+
+export interface PostureRecommendation {
+  id: string;
+  title: string;
+  rationale: string;
+  priority: "low" | "medium" | "high" | "critical";
+  category: "hardening" | "access" | "policy" | "infrastructure";
+}
+
+export interface PosturePrediction {
+  id: string;
+  title: string;
+  likelihood: "low" | "medium" | "high";
+  reasoning: string;
+}
+
+export interface PostureBrief {
+  generatedAt: number;
+  model: string;
+  summary: string;
+  topRisks: string[];
+  recommendations: PostureRecommendation[];
+  predictions: PosturePrediction[];
+}
+
+export type ComplianceStatus = "pass" | "warn" | "fail" | "manual";
+
+export interface ComplianceControl {
+  id: string;
+  framework: "SOC2" | "ISO27001" | "HIPAA" | "GDPR";
+  code: string; // e.g. "CC6.1"
+  title: string;
+  description: string;
+  status: ComplianceStatus;
+  evidence: string;
+}
+
+export interface ComplianceFrameworkSummary {
+  framework: ComplianceControl["framework"];
+  pass: number;
+  warn: number;
+  fail: number;
+  manual: number;
+  total: number;
+  scorePct: number;
+}

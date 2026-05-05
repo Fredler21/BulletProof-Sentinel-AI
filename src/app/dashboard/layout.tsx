@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/server/session";
+import { ensureRoleForUser, ROLE_LABEL } from "@/lib/server/roles";
 import { LogoutButton } from "@/app/dashboard/_components/LogoutButton";
 
 export default async function DashboardLayout({
@@ -12,6 +13,8 @@ export default async function DashboardLayout({
   if (!user) {
     redirect("/login");
   }
+  const role = await ensureRoleForUser(user);
+  const isSuperAdmin = role.role === "super-admin";
 
   return (
     <div className="flex min-h-screen">
@@ -27,12 +30,18 @@ export default async function DashboardLayout({
         <nav className="space-y-1 text-sm">
           <NavLink href="/dashboard" label="Overview" />
           <NavLink href="/dashboard/events" label="Security Events" />
+          <NavLink href="/dashboard/incidents" label="Incidents" />
           <NavLink href="/dashboard/scanner" label="Scanner" />
           <NavLink href="/dashboard/honeypots" label="Honeypots" />
           <NavLink href="/dashboard/alerts" label="Alerts" />
           <NavLink href="/dashboard/blocklist" label="Blocklist" />
           <NavLink href="/dashboard/copilot" label="AI Copilot" />
+          <NavLink href="/dashboard/posture" label="Posture Brief" />
+          <NavLink href="/dashboard/compliance" label="Compliance" />
           <NavLink href="/dashboard/reports" label="Reports" />
+          {isSuperAdmin && (
+            <NavLink href="/dashboard/roles" label="User Roles" />
+          )}
         </nav>
       </aside>
 
@@ -42,6 +51,9 @@ export default async function DashboardLayout({
             Signed in as{" "}
             <span className="text-slate-100">
               {user.displayName ?? user.email ?? user.uid}
+            </span>
+            <span className="ml-2 rounded-full border border-sentinel-accent/40 bg-sentinel-accent/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-sentinel-accent">
+              {ROLE_LABEL[role.role]}
             </span>
           </div>
           <LogoutButton />
