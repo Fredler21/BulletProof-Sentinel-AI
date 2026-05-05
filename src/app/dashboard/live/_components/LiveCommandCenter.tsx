@@ -96,7 +96,7 @@ export function LiveCommandCenter(): React.ReactElement {
       {/* Row 1: Operators · Map · Gauge+Scanner */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         <div className="xl:col-span-3">
-          <OperatorsPanel />
+          <OperatorsPanel stats={stats} items={items} />
         </div>
         <div className="xl:col-span-6">
           <WorldMap items={items} />
