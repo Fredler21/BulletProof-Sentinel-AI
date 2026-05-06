@@ -38,7 +38,11 @@ async function handle(req: NextRequest, path: string): Promise<Response> {
   // banner, mimicking real WordPress / admin behaviour to keep attackers
   // engaged and trip the brute-force detector.
   const url = new URL(path + "?err=1", req.url);
-  return NextResponse.redirect(url, { status: 303 });
+  const res = NextResponse.redirect(url, { status: 303 });
+  res.headers.set("X-Sentinel-Trap", "1");
+  res.headers.set("X-Sentinel-Notice", "This isn't WordPress. It's WordTrap. Patent pending.");
+  res.headers.set("X-Powered-By", "WordPress 4.2 (lying)");
+  return res;
 }
 
 export async function POST(req: NextRequest): Promise<Response> {

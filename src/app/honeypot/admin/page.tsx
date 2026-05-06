@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { triggerTrap } from "@/lib/server/honeypots";
 import { isIpBlocked } from "@/lib/server/blocklist";
+import { pickTaunt } from "@/lib/server/honeypotTaunts";
 
 export const dynamic = "force-dynamic";
 
@@ -40,15 +41,34 @@ export default async function HoneypotAdminPage({
     userAgent: h.get("user-agent"),
     method: "GET",
   });
+  const taunt = pickTaunt(ip);
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-16 text-slate-200">
+      {/*
+        ───────────────────────────────────────────────
+         Hi there, source-viewer. 👋
+         Yes, we knew you'd Ctrl+U. We always do.
+         This is a Sentinel AI honeypot. The 'admin'
+         account here has the password 'youAreOnCamera'.
+         (It does not work. Nothing here works. That's the point.)
+         Suggested next steps:
+           1. Close the tab.
+           2. Touch grass. 🌱
+           3. Apply to our security team — we're hiring.
+        ───────────────────────────────────────────────
+      */}
       <div className="w-full max-w-sm rounded-md border border-slate-800 bg-slate-900 p-6">
         <h1 className="text-lg font-semibold text-white">Admin Console</h1>
         <p className="mt-1 text-xs text-slate-400">Restricted access.</p>
         {sp?.err && (
-          <div className="mt-3 rounded border border-red-700/40 bg-red-900/30 px-3 py-2 text-xs text-red-300">
-            Invalid credentials.
-          </div>
+          <>
+            <div className="mt-3 rounded border border-red-700/40 bg-red-900/30 px-3 py-2 text-xs text-red-300">
+              Invalid credentials.
+            </div>
+            <div className="mt-2 rounded border border-amber-600/40 bg-amber-900/20 px-3 py-2 text-xs text-amber-200">
+              {taunt}
+            </div>
+          </>
         )}
         <form className="mt-5 space-y-3" action="/api/honeypot/admin" method="post">
           <input

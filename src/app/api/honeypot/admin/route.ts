@@ -33,5 +33,9 @@ export async function POST(req: NextRequest): Promise<Response> {
   });
 
   const url = new URL("/honeypot/admin?err=1", req.url);
-  return NextResponse.redirect(url, { status: 303 });
+  const res = NextResponse.redirect(url, { status: 303 });
+  res.headers.set("X-Sentinel-Trap", "1");
+  res.headers.set("X-Sentinel-Notice", "Bro. We have your IP framed on the office wall now.");
+  res.headers.set("X-Powered-By", "Hopes, dreams, and your packet captures");
+  return res;
 }

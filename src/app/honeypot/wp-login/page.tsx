@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { triggerTrap } from "@/lib/server/honeypots";
 import { isIpBlocked } from "@/lib/server/blocklist";
+import { pickTaunt } from "@/lib/server/honeypotTaunts";
 
 export const dynamic = "force-dynamic";
 
@@ -38,14 +39,31 @@ export default async function HoneypotWpLoginPage({
     userAgent: h.get("user-agent"),
     method: "GET",
   });
+  const taunt = pickTaunt(ip);
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f1f1f1] px-6 py-16 text-slate-900">
+      {/*
+        ───────────────────────────────────────────────
+         <!-- wp-content/plugins/definitely-not-a-trap.php -->
+         Plot twist: there is no WordPress here. There is
+         only Zuul. (And a very thorough audit log.)
+         Your IP, headers, and brute-force timing are
+         already plotted on a graph somebody is presenting
+         in a meeting right now. ☕📊
+         Have a lovely day. 🌻
+        ───────────────────────────────────────────────
+      */}
       <div className="w-full max-w-sm rounded-md border border-slate-300 bg-white p-6 shadow">
         <h1 className="text-center text-lg font-semibold">WordPress</h1>
         {sp?.err && (
-          <div className="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
-            <strong>ERROR</strong>: The password you entered is incorrect.
-          </div>
+          <>
+            <div className="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
+              <strong>ERROR</strong>: The password you entered is incorrect.
+            </div>
+            <div className="mt-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              {taunt}
+            </div>
+          </>
         )}
         <form className="mt-5 space-y-3" action="/api/honeypot/wp-login" method="post">
           <input
