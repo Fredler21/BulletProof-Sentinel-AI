@@ -5,6 +5,7 @@ export type SecurityEventType =
   | "auth.login.failure"
   | "auth.signup"
   | "honeypot.trigger"
+  | "honeypot.credentials"
   | "scan.suspicious"
   | "system";
 

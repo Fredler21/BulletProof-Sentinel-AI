@@ -25,9 +25,14 @@ function BlockedScreen(): React.ReactElement {
   );
 }
 
-export default async function HoneypotAdminPage(): Promise<React.ReactElement> {
+export default async function HoneypotAdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ err?: string }>;
+}): Promise<React.ReactElement> {
   const h = await headers();
   const ip = clientIp(h);
+  const sp = await searchParams;
   if (await isIpBlocked(ip)) return <BlockedScreen />;
 
   await triggerTrap("/honeypot/admin", {
@@ -40,14 +45,21 @@ export default async function HoneypotAdminPage(): Promise<React.ReactElement> {
       <div className="w-full max-w-sm rounded-md border border-slate-800 bg-slate-900 p-6">
         <h1 className="text-lg font-semibold text-white">Admin Console</h1>
         <p className="mt-1 text-xs text-slate-400">Restricted access.</p>
-        <form className="mt-5 space-y-3" action="#" method="post">
+        {sp?.err && (
+          <div className="mt-3 rounded border border-red-700/40 bg-red-900/30 px-3 py-2 text-xs text-red-300">
+            Invalid credentials.
+          </div>
+        )}
+        <form className="mt-5 space-y-3" action="/api/honeypot/admin" method="post">
           <input
             type="text"
+            name="username"
             placeholder="Username"
             className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
           />
           <input
             type="password"
+            name="password"
             placeholder="Password"
             className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
           />
