@@ -1,18 +1,28 @@
 import type { NextConfig } from "next";
 
-// Honeypot rewrites: capture the literal paths attackers and scanners hit
-// most often (env files, git internals, phpmyadmin, spring actuator, etc.)
-// and route them to our decoy responder so each one trips an event and
-// returns convincingly fake content with a taunt.
-const HONEYPOT_REWRITES = [
+// Paths that look like an admin login in a browser → render the fake
+// admin/WordPress login page so the attacker sees a convincing form.
+const FAKE_LOGIN_REWRITES: Array<{ source: string; destination: string }> = [
+  { source: "/admin", destination: "/honeypot/admin" },
+  { source: "/admin/login", destination: "/honeypot/admin" },
+  { source: "/admin.php", destination: "/honeypot/admin" },
+  { source: "/administrator", destination: "/honeypot/admin" },
+  { source: "/login.php", destination: "/honeypot/admin" },
+  { source: "/manager/html", destination: "/honeypot/admin" },
+  { source: "/wp-admin", destination: "/honeypot/wp-login" },
+  { source: "/wp-admin/setup-config.php", destination: "/honeypot/wp-login" },
+  { source: "/wp-login.php", destination: "/honeypot/wp-login" },
+];
+
+// Paths that look like config files, API probes, or scanner targets →
+// route to the decoy responder which returns realistic-looking fake content.
+const DECOY_REWRITES = [
   "/.env",
   "/.env.local",
   "/.env.production",
   "/.env.backup",
   "/.git/config",
   "/.git/HEAD",
-  "/wp-admin",
-  "/wp-admin/setup-config.php",
   "/wp-config.php",
   "/wp-config.php.bak",
   "/phpmyadmin",
@@ -35,17 +45,19 @@ const HONEYPOT_REWRITES = [
   "/api/v1/auth",
   "/api/v1/users",
   "/api/admin",
-  "/admin.php",
-  "/administrator",
+  "/cgi-bin/luci",
 ];
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   async rewrites() {
-    return HONEYPOT_REWRITES.map((source) => ({
-      source,
-      destination: `/api/honeypot/decoy${source}`,
-    }));
+    return [
+      ...FAKE_LOGIN_REWRITES,
+      ...DECOY_REWRITES.map((source) => ({
+        source,
+        destination: `/api/honeypot/decoy${source}`,
+      })),
+    ];
   },
 };
 

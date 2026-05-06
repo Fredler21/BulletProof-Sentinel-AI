@@ -63,6 +63,21 @@ export async function listRecentEvents(limit = 50): Promise<SecurityEvent[]> {
   return snap.docs.map((d) => d.data() as SecurityEvent);
 }
 
+export async function listEventsForRoute(
+  route: string,
+  limit = 200,
+): Promise<SecurityEvent[]> {
+  // Avoid composite index requirement: filter by route, sort in memory.
+  const snap = await adminDb
+    .collection(EVENTS)
+    .where("route", "==", route)
+    .limit(limit)
+    .get();
+  return snap.docs
+    .map((d) => d.data() as SecurityEvent)
+    .sort((a, b) => b.createdAt - a.createdAt);
+}
+
 async function createAlertFromEvent(event: SecurityEvent): Promise<void> {
   const doc = adminDb.collection(ALERTS).doc();
   const alert: AlertItem = {

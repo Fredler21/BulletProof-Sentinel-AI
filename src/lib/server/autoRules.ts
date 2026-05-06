@@ -50,6 +50,12 @@ async function saveActivity(activity: IpActivity): Promise<void> {
 
 export async function applyAutoRules(event: SecurityEvent): Promise<void> {
   if (!event.ip) return;
+  // Auto-blocking is OFF by default. Set AUTO_BLOCK_ENABLED=true to re-enable.
+  // When disabled we still record activity counters so the dashboard can show
+  // attacker behaviour, but we never call blockIp() automatically.
+  const autoBlockEnabled =
+    (process.env.AUTO_BLOCK_ENABLED ?? "").toLowerCase() === "true";
+
   // Already blocked? skip.
   const existing = await getBlockedIp(event.ip);
   if (existing && (existing.expiresAt == null || existing.expiresAt > Date.now())) {
@@ -67,7 +73,7 @@ export async function applyAutoRules(event: SecurityEvent): Promise<void> {
     }
     activity.honeypotCount += 1;
     mutated = true;
-    if (activity.honeypotCount >= HONEYPOT_THRESHOLD) {
+    if (autoBlockEnabled && activity.honeypotCount >= HONEYPOT_THRESHOLD) {
       await blockIp({
         ip: event.ip,
         reason: `Auto-block: ${activity.honeypotCount} honeypot triggers in ${HONEYPOT_WINDOW_MS / 60000}m.`,
@@ -87,7 +93,7 @@ export async function applyAutoRules(event: SecurityEvent): Promise<void> {
     }
     activity.authFailCount += 1;
     mutated = true;
-    if (activity.authFailCount >= AUTH_FAIL_THRESHOLD) {
+    if (autoBlockEnabled && activity.authFailCount >= AUTH_FAIL_THRESHOLD) {
       await blockIp({
         ip: event.ip,
         reason: `Auto-block: ${activity.authFailCount} failed logins in ${AUTH_FAIL_WINDOW_MS / 60000}m.`,

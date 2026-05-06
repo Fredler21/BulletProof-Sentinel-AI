@@ -3,7 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function BlockIpButton({ ip }: { ip: string }): React.ReactElement {
+export function BlockIpButton({
+  ip,
+  reason = "Manual block from alert detail",
+  ttlHours = 24,
+}: {
+  ip: string;
+  reason?: string;
+  ttlHours?: number | null;
+}): React.ReactElement {
   const router = useRouter();
   const [busy, setBusy] = useState<boolean>(false);
   const [done, setDone] = useState<boolean>(false);
@@ -14,11 +22,7 @@ export function BlockIpButton({ ip }: { ip: string }): React.ReactElement {
       const res = await fetch("/api/blocklist", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          ip,
-          reason: "Manual block from alert detail",
-          ttlHours: 24,
-        }),
+        body: JSON.stringify({ ip, reason, ttlHours }),
       });
       if (res.ok) {
         setDone(true);
