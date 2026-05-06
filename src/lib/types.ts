@@ -116,6 +116,8 @@ export interface GeoInfo {
   city: string | null;
   org: string | null;
   asn: string | null;
+  lat: number | null;
+  lon: number | null;
   cachedAt: number;
 }
 

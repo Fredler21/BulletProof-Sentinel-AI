@@ -11,6 +11,8 @@ interface IpwhoResponse {
   country_code?: string;
   region?: string;
   city?: string;
+  latitude?: number;
+  longitude?: number;
   connection?: { org?: string; asn?: number; isp?: string };
   timezone?: { id?: string };
 }
@@ -32,6 +34,8 @@ async function fetchGeo(ip: string): Promise<GeoInfo | null> {
       city: null,
       org: null,
       asn: null,
+      lat: null,
+      lon: null,
       cachedAt: Date.now(),
     };
   }
@@ -53,6 +57,8 @@ async function fetchGeo(ip: string): Promise<GeoInfo | null> {
       city: data.city ?? null,
       org: data.connection?.org ?? data.connection?.isp ?? null,
       asn: data.connection?.asn ? `AS${data.connection.asn}` : null,
+      lat: typeof data.latitude === "number" ? data.latitude : null,
+      lon: typeof data.longitude === "number" ? data.longitude : null,
       cachedAt: Date.now(),
     };
   } catch {

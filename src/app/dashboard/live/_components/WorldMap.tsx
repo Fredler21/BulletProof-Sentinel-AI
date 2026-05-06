@@ -1,15 +1,19 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { geoEqualEarth, geoPath, type GeoPermissibleObjects } from "d3-geo";
+import { feature } from "topojson-client";
+import type {
+  FeatureCollection,
+  Feature,
+  Geometry,
+} from "geojson";
+import type { Topology, GeometryCollection } from "topojson-specification";
 import type { FeedItemWithCoords } from "./LiveCommandCenter";
 
-const HOME = { lat: 38, lon: -97 };
-
-function project(lat: number, lon: number): { x: number; y: number } {
-  const x = ((lon + 180) / 360) * 1000;
-  const y = ((90 - lat) / 180) * 500;
-  return { x, y };
-}
+const WIDTH = 1000;
+const HEIGHT = 500;
+const HOME = { lat: 38, lon: -97, label: "SENTINEL-CORE" };
 
 const SEV_COLOR: Record<string, string> = {
   low: "#94a3b8",
@@ -18,64 +22,30 @@ const SEV_COLOR: Record<string, string> = {
   critical: "#ff5577",
 };
 
-// Stylized low-poly continent silhouettes (equirectangular, viewBox 1000x500).
-// Hand-traced from real lat/lon corners — recognisable but holo-flat.
-const CONTINENTS: string[] = [
-  // North America
-  "M42,69 L250,42 L347,83 L320,140 L278,175 L250,200 L260,225 L228,228 L208,194 L172,156 L153,111 L83,83 Z",
-  // Greenland (separate blob)
-  "M360,55 L405,50 L420,90 L390,115 L365,95 Z",
-  // South America
-  "M306,219 L350,235 L403,269 L395,310 L370,360 L325,400 L305,395 L295,335 L290,290 L283,250 Z",
-  // Europe
-  "M486,97 L530,80 L578,72 L620,90 L640,118 L605,135 L560,138 L520,140 L490,128 L470,115 Z",
-  // UK + Ireland (small)
-  "M468,108 L478,100 L484,118 L472,125 Z",
-  // Africa
-  "M472,153 L520,148 L589,160 L605,170 L630,200 L640,235 L615,290 L595,335 L555,355 L525,335 L495,280 L475,235 L460,200 L455,175 Z",
-  // Madagascar
-  "M624,300 L634,295 L640,330 L628,335 Z",
-  // Asia (huge)
-  "M540,55 L720,42 L920,55 L975,80 L955,110 L905,135 L865,165 L820,195 L800,225 L760,228 L720,205 L690,180 L655,170 L625,150 L605,135 L645,118 L680,100 L650,80 Z",
-  // India peninsula
-  "M695,180 L720,180 L735,205 L725,235 L710,232 L700,205 Z",
-  // SE Asia / Indochina
-  "M790,205 L820,210 L835,240 L815,255 L795,235 Z",
-  // Indonesia / island arcs
-  "M780,255 L815,255 L840,265 L870,265 L895,272 L880,280 L835,275 L800,272 Z",
-  // Japan
-  "M905,135 L920,130 L928,160 L915,165 Z",
-  // Australia
-  "M820,290 L900,288 L935,310 L925,348 L870,360 L825,345 L815,315 Z",
-  // New Zealand
-  "M955,360 L965,355 L972,378 L960,382 Z",
-  // Antarctica strip
-  "M0,455 L1000,455 L1000,495 L900,488 L600,492 L300,488 L0,495 Z",
-];
+interface AttackPoint {
+  id: string;
+  ip: string | null;
+  severity: string;
+  city: string | null;
+  country: string | null;
+  org: string | null;
+  x: number;
+  y: number;
+  hx: number;
+  hy: number;
+  idx: number;
+}
 
-// Small dot islands (Pacific, Caribbean, etc.) for atmosphere.
-const ISLANDS: [number, number][] = [
-  [320, 200], [305, 215], [330, 195],
-  [120, 195], [108, 205], [90, 215], [70, 230],
-  [965, 250], [945, 270], [930, 285],
-  [770, 235], [755, 250],
-  [410, 260], [395, 360],
-];
-
-function curvePath(
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-): string {
+function curvePath(x1: number, y1: number, x2: number, y2: number): string {
   const mx = (x1 + x2) / 2;
   const my = (y1 + y2) / 2;
   const dx = x2 - x1;
   const dy = y2 - y1;
   const dist = Math.hypot(dx, dy);
+  if (dist === 0) return `M ${x1} ${y1}`;
   const nx = -dy / dist;
   const ny = dx / dist;
-  const lift = Math.min(180, dist * 0.35);
+  const lift = Math.min(160, dist * 0.3);
   const cx = mx + nx * lift;
   const cy = my + ny * lift;
   return `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
@@ -86,16 +56,71 @@ export function WorldMap({
 }: {
   items: FeedItemWithCoords[];
 }): React.ReactElement {
-  const target = project(HOME.lat, HOME.lon);
-  const points = useMemo(() => {
-    return items
-      .filter((i) => i.coords)
-      .slice(0, 60)
-      .map((i, idx) => {
-        const p = project(i.coords!.lat, i.coords!.lon);
-        return { ...i, x: p.x, y: p.y, idx };
+  const [countries, setCountries] = useState<Feature<Geometry>[]>([]);
+  const [hover, setHover] = useState<AttackPoint | null>(null);
+
+  // Lazy-load the world atlas TopoJSON on the client. Cached by the browser
+  // after first load. ~80KB.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const mod = (await import("world-atlas/countries-110m.json")) as unknown as {
+          default: Topology<{ countries: GeometryCollection }>;
+        };
+        const topo = mod.default;
+        const fc = feature(
+          topo,
+          topo.objects.countries,
+        ) as unknown as FeatureCollection<Geometry>;
+        if (alive) setCountries(fc.features);
+      } catch {
+        /* network/atlas import failure — map will render empty land */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const projection = useMemo(
+    () =>
+      geoEqualEarth()
+        .scale(180)
+        .translate([WIDTH / 2, HEIGHT / 2]),
+    [],
+  );
+  const pathGen = useMemo(() => geoPath(projection), [projection]);
+
+  const home = useMemo(() => {
+    const p = projection([HOME.lon, HOME.lat]);
+    return p ? { x: p[0], y: p[1] } : { x: WIDTH / 2, y: HEIGHT / 2 };
+  }, [projection]);
+
+  const points: AttackPoint[] = useMemo(() => {
+    const arr: AttackPoint[] = [];
+    let i = 0;
+    for (const it of items) {
+      if (!it.coords) continue;
+      const xy = projection([it.coords.lon, it.coords.lat]);
+      if (!xy) continue;
+      arr.push({
+        id: it.id,
+        ip: it.ip,
+        severity: it.severity,
+        city: it.geo?.city ?? null,
+        country: it.geo?.country ?? null,
+        org: it.geo?.org ?? null,
+        x: xy[0],
+        y: xy[1],
+        hx: home.x,
+        hy: home.y,
+        idx: i++,
       });
-  }, [items]);
+      if (arr.length >= 80) break;
+    }
+    return arr;
+  }, [items, projection, home]);
 
   return (
     <div className="glass holo-border hud-frame scanlines relative h-[460px] overflow-hidden rounded-2xl">
@@ -108,7 +133,11 @@ export function WorldMap({
         </span>
       </div>
 
-      <svg viewBox="0 0 1000 500" className="block h-[420px] w-full" preserveAspectRatio="xMidYMid meet">
+      <svg
+        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+        className="block h-[420px] w-full"
+        preserveAspectRatio="xMidYMid meet"
+      >
         <defs>
           <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
             <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#0d2a3a" strokeWidth="0.5" />
@@ -117,76 +146,72 @@ export function WorldMap({
             <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.18" />
             <stop offset="100%" stopColor="#22d3ee" stopOpacity="0" />
           </radialGradient>
-          <linearGradient id="continentFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#a855f7" stopOpacity="0.10" />
-          </linearGradient>
-          <filter id="continentGlow">
-            <feGaussianBlur stdDeviation="0.6" />
-          </filter>
-          <linearGradient id="arc-low" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#94a3b8" stopOpacity="0" />
-            <stop offset="100%" stopColor="#94a3b8" stopOpacity="0.7" />
-          </linearGradient>
-          <linearGradient id="arc-medium" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#22d3ee" stopOpacity="0" />
-            <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.95" />
-          </linearGradient>
-          <linearGradient id="arc-high" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#a855f7" stopOpacity="0" />
-            <stop offset="100%" stopColor="#ff2bd6" stopOpacity="0.95" />
-          </linearGradient>
-          <linearGradient id="arc-critical" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#ff5577" stopOpacity="0" />
-            <stop offset="100%" stopColor="#ff5577" stopOpacity="1" />
+          <linearGradient id="landFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.16" />
+            <stop offset="100%" stopColor="#a855f7" stopOpacity="0.08" />
           </linearGradient>
         </defs>
 
-        {/* Background grid + globe glow */}
-        <rect width="1000" height="500" fill="url(#grid)" />
-        <ellipse cx={target.x} cy={target.y} rx="220" ry="140" fill="url(#globePulse)" />
+        <rect width={WIDTH} height={HEIGHT} fill="url(#grid)" />
+        <ellipse cx={home.x} cy={home.y} rx="220" ry="140" fill="url(#globePulse)" />
 
-        {/* Equator + meridian guides */}
-        <line x1="0" y1="250" x2="1000" y2="250" stroke="#0e3a4d" strokeDasharray="4 6" strokeWidth="0.6" />
-        <line x1="500" y1="0" x2="500" y2="500" stroke="#0e3a4d" strokeDasharray="4 6" strokeWidth="0.6" />
-        {[125, 375].map((y) => (
-          <line key={y} x1="0" y1={y} x2="1000" y2={y} stroke="#0e3a4d" strokeDasharray="2 8" strokeWidth="0.5" />
-        ))}
-
-        {/* Continents — holographic silhouettes */}
-        <g filter="url(#continentGlow)">
-          {CONTINENTS.map((d, i) => (
-            <path
-              key={i}
-              d={d}
-              fill="url(#continentFill)"
-              stroke="#22d3ee"
-              strokeOpacity="0.55"
-              strokeWidth="0.8"
-              strokeLinejoin="round"
-            />
-          ))}
-          {ISLANDS.map(([x, y], i) => (
-            <circle key={i} cx={x} cy={y} r="1.2" fill="#22d3ee" opacity="0.55" />
-          ))}
+        {/* Real country borders from world-atlas TopoJSON */}
+        <g>
+          {countries.map((c, i) => {
+            const d = pathGen(c as GeoPermissibleObjects);
+            if (!d) return null;
+            return (
+              <path
+                key={i}
+                d={d}
+                fill="url(#landFill)"
+                stroke="#22d3ee"
+                strokeOpacity={0.45}
+                strokeWidth={0.5}
+                strokeLinejoin="round"
+              />
+            );
+          })}
         </g>
 
         {/* Attack arcs */}
         {points.map((p) => {
           const color = SEV_COLOR[p.severity] ?? SEV_COLOR.low;
-          const grad = `url(#arc-${p.severity ?? "low"})`;
-          const path = curvePath(p.x, p.y, target.x, target.y);
+          const path = curvePath(p.x, p.y, p.hx, p.hy);
           const dur = 2 + (p.idx % 5) * 0.4;
           return (
             <g key={p.id}>
-              <path d={path} stroke={grad} strokeWidth="0.9" fill="none" opacity="0.7" />
+              <path d={path} stroke={color} strokeOpacity={0.5} strokeWidth={0.8} fill="none" />
               <circle r={1.8} fill={color}>
                 <animateMotion path={path} dur={`${dur}s`} repeatCount="indefinite" />
               </circle>
-              <circle cx={p.x} cy={p.y} r={2.6} fill={color} opacity={0.95} />
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={3}
+                fill={color}
+                opacity={0.95}
+                onMouseEnter={() => setHover(p)}
+                onMouseLeave={() => setHover(null)}
+                style={{ cursor: "pointer" }}
+              />
               <circle cx={p.x} cy={p.y} r={5} fill={color} opacity={0.18}>
-                <animate attributeName="r" from="3" to="14" dur="2s" begin={`${(p.idx % 8) * 0.25}s`} repeatCount="indefinite" />
-                <animate attributeName="opacity" from="0.5" to="0" dur="2s" begin={`${(p.idx % 8) * 0.25}s`} repeatCount="indefinite" />
+                <animate
+                  attributeName="r"
+                  from="3"
+                  to="14"
+                  dur="2s"
+                  begin={`${(p.idx % 8) * 0.25}s`}
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="opacity"
+                  from="0.5"
+                  to="0"
+                  dur="2s"
+                  begin={`${(p.idx % 8) * 0.25}s`}
+                  repeatCount="indefinite"
+                />
               </circle>
             </g>
           );
@@ -194,16 +219,51 @@ export function WorldMap({
 
         {/* Home base */}
         <g>
-          <circle cx={target.x} cy={target.y} r={5} fill="#22ff88" />
-          <circle cx={target.x} cy={target.y} r={10} fill="none" stroke="#22ff88" strokeWidth="0.8" opacity={0.55}>
+          <circle cx={home.x} cy={home.y} r={5} fill="#22ff88" />
+          <circle
+            cx={home.x}
+            cy={home.y}
+            r={10}
+            fill="none"
+            stroke="#22ff88"
+            strokeWidth={0.8}
+            opacity={0.55}
+          >
             <animate attributeName="r" from="6" to="28" dur="1.8s" repeatCount="indefinite" />
             <animate attributeName="opacity" from="0.7" to="0" dur="1.8s" repeatCount="indefinite" />
           </circle>
-          <text x={target.x + 9} y={target.y - 6} fontFamily="JetBrains Mono, monospace" fontSize="9" fill="#22ff88">
-            ▌ SENTINEL-CORE
+          <text
+            x={home.x + 9}
+            y={home.y - 6}
+            fontFamily="JetBrains Mono, monospace"
+            fontSize="9"
+            fill="#22ff88"
+          >
+            ▌ {HOME.label}
           </text>
         </g>
       </svg>
+
+      {/* Hover tooltip */}
+      {hover && (
+        <div
+          className="pointer-events-none absolute z-10 max-w-[260px] rounded-md border border-neon-cyan/40 bg-black/85 px-3 py-2 font-mono text-[10px] text-slate-100 shadow-neon-cyan"
+          style={{
+            left: `${(hover.x / WIDTH) * 100}%`,
+            top: `calc(${(hover.y / HEIGHT) * 100}% + 30px)`,
+            transform: "translate(-50%, 0)",
+          }}
+        >
+          <div className="text-neon-cyan">▌ {hover.ip ?? "unknown ip"}</div>
+          <div className="text-slate-300">
+            {[hover.city, hover.country].filter(Boolean).join(", ") || "unknown location"}
+          </div>
+          {hover.org && <div className="text-slate-400">{hover.org}</div>}
+          <div className="mt-1 uppercase" style={{ color: SEV_COLOR[hover.severity] }}>
+            severity: {hover.severity}
+          </div>
+        </div>
+      )}
 
       <div className="absolute bottom-2 left-3 flex gap-3 font-mono text-[9px] uppercase tracking-widest">
         <Legend color="#94a3b8" label="low" />
@@ -223,4 +283,3 @@ function Legend({ color, label }: { color: string; label: string }): React.React
     </span>
   );
 }
-
