@@ -45,7 +45,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     // addresses may sign in / sign up. Everyone else is rejected and the
     // attempt is logged as a high-severity event.
     if (!isEmailAllowed(decoded.email)) {
-      await recordSecurityEvent({
+      void recordSecurityEvent({
         type: "auth.login.failure",
         severity: "high",
         message: `Login blocked by allowlist: ${decoded.email ?? decoded.uid}`,
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         userAgent: getRequestUserAgent(req),
         route: "/api/auth/session",
         metadata: { email: decoded.email ?? null, uid: decoded.uid },
-      });
+      }).catch(() => {});
       return NextResponse.json(
         { error: "email_not_allowed" },
         { status: 403 },
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       path: "/",
     });
 
-    await recordSecurityEvent({
+    void recordSecurityEvent({
       type: body.signup ? "auth.signup" : "auth.login.success",
       severity: "low",
       message: body.signup
@@ -83,18 +83,18 @@ export async function POST(req: NextRequest): Promise<Response> {
       userAgent: getRequestUserAgent(req),
       route: "/api/auth/session",
       ownerUid: decoded.uid,
-    });
+    }).catch(() => {});
 
     return res;
   } catch {
-    await recordSecurityEvent({
+    void recordSecurityEvent({
       type: "auth.login.failure",
       severity: "medium",
       message: "Invalid Firebase ID token presented to session endpoint",
       ip: getRequestIp(req),
       userAgent: getRequestUserAgent(req),
       route: "/api/auth/session",
-    });
+    }).catch(() => {});
     return NextResponse.json({ error: "invalid_token" }, { status: 401 });
   }
 }
