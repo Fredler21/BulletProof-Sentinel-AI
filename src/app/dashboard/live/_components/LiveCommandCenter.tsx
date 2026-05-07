@@ -60,6 +60,41 @@ export function LiveCommandCenter(): React.ReactElement {
     return items.filter((it) => it.projectId && set.has(it.projectId));
   }, [items, selectedProjects]);
 
+  // When a project filter is active, derive stats from the filtered items so
+  // every panel (KPIs, gauge, scanner) reflects only those projects instead of
+  // global counts that would otherwise look like nothing changed.
+  const effectiveStats = useMemo<LiveStats | null>(() => {
+    if (selectedProjects.length === 0) return stats;
+    if (!stats) return null;
+    const now = Date.now();
+    const oneMinAgo = now - 60_000;
+    const oneDayAgo = now - 24 * 60 * 60 * 1000;
+    const recent = filteredItems.filter((i) => i.createdAt >= oneDayAgo);
+    const ips = new Set(recent.map((i) => i.ip).filter(Boolean) as string[]);
+    const high = recent.filter(
+      (i) => i.severity === "high" || i.severity === "critical",
+    ).length;
+    const honey = recent.filter((i) => i.type?.startsWith("honeypot")).length;
+    const cmds = recent.filter((i) => i.type === "honeypot.command").length;
+    const epm = filteredItems.filter((i) => i.createdAt >= oneMinAgo).length;
+    const riskScore = Math.min(
+      100,
+      Math.round(high * 8 + honey * 3 + ips.size * 2),
+    );
+    return {
+      ...stats,
+      activeAttackers: ips.size,
+      connectionsToday: recent.length,
+      uniqueIps: ips.size,
+      highRiskSessions: high,
+      vulnsDetected: 0,
+      honeypotEngagements: honey,
+      commandsExecuted: cmds,
+      riskScore,
+      eventsPerMinute: epm,
+    };
+  }, [stats, filteredItems, selectedProjects]);
+
   useEffect(() => {
     let alive = true;
     async function pull(): Promise<void> {
@@ -105,7 +140,7 @@ export function LiveCommandCenter(): React.ReactElement {
   return (
     <div className="relative flex flex-col gap-4">
       {/* HUD top bar */}
-      <TopStatusBar stats={stats} />
+      <TopStatusBar stats={effectiveStats} />
 
       {/* Project filter (1, 2, or 3 projects at once) */}
       <ProjectFilterBar
@@ -115,26 +150,43 @@ export function LiveCommandCenter(): React.ReactElement {
         maxSelectable={3}
       />
 
+      {selectedProjects.length > 0 && (
+        <div className="flex items-center justify-between rounded-lg border border-sentinel-accent/40 bg-sentinel-accent/5 px-3 py-2 text-xs text-sentinel-accent">
+          <span>
+            🔎 Live console scoped to {selectedProjects.length} project
+            {selectedProjects.length > 1 ? "s" : ""} · showing{" "}
+            {filteredItems.length} of {items.length} events
+          </span>
+          <button
+            type="button"
+            onClick={() => setSelectedProjects([])}
+            className="rounded border border-sentinel-accent/40 px-2 py-0.5 text-[11px] hover:bg-sentinel-accent/10"
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
+
       {/* KPI strip */}
-      <LiveStatsGrid stats={stats} />
+      <LiveStatsGrid stats={effectiveStats} />
 
       {/* Row 1: Operators · Map · Gauge+Scanner */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         <div className="xl:col-span-3">
-          <OperatorsPanel stats={stats} items={filteredItems} />
+          <OperatorsPanel stats={effectiveStats} items={filteredItems} />
         </div>
         <div className="xl:col-span-6">
           <WorldMap items={filteredItems} />
         </div>
         <div className="flex flex-col gap-4 xl:col-span-3">
-          <RiskGauge stats={stats} />
-          <VulnScannerWidget stats={stats} />
+          <RiskGauge stats={effectiveStats} />
+          <VulnScannerWidget stats={effectiveStats} />
         </div>
       </div>
 
       {/* Row 2: AI · Live feed · Honeypots */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <AIIntelStrip stats={stats} items={filteredItems} />
+        <AIIntelStrip stats={effectiveStats} items={filteredItems} />
         <LiveFeed items={filteredItems} />
         <HoneypotSessions items={filteredItems} />
       </div>
@@ -153,7 +205,7 @@ export function LiveCommandCenter(): React.ReactElement {
         <div className="lg:col-span-2">
           <TerminalConsole items={filteredItems} />
         </div>
-        <IncidentResponsePanel stats={stats} items={filteredItems} />
+        <IncidentResponsePanel stats={effectiveStats} items={filteredItems} />
       </div>
 
       {/* Floating alerts */}
