@@ -1,7 +1,10 @@
 import { listRecentEvents } from "@/lib/server/events";
 import { getGeoForIps } from "@/lib/server/geoip";
+import { listProjectsForUser } from "@/lib/server/projects";
+import { requireSessionUser } from "@/lib/server/session";
 import { SeverityBadge } from "@/app/dashboard/_components/SeverityBadge";
 import { TimeAgo } from "@/app/dashboard/_components/TimeAgo";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +19,12 @@ function flagFromCountryCode(cc: string | null): string {
 }
 
 export default async function EventsPage(): Promise<React.ReactElement> {
-  const events = await listRecentEvents(200);
+  const user = await requireSessionUser();
+  const [events, projects] = await Promise.all([
+    listRecentEvents(200),
+    listProjectsForUser(user.uid),
+  ]);
+  const projectMap = new Map(projects.map((p) => [p.id, p]));
   const ips = events.map((e) => e.ip).filter((ip): ip is string => Boolean(ip));
   const geo = await getGeoForIps(ips);
   return (
@@ -24,7 +32,8 @@ export default async function EventsPage(): Promise<React.ReactElement> {
       <div>
         <h1 className="text-2xl font-semibold text-white">Security Events</h1>
         <p className="text-sm text-sentinel-muted">
-          Latest events captured across your monitored systems.
+          Latest events captured across your monitored systems. Click a project
+          name to drill into its attackers.
         </p>
       </div>
       <div className="overflow-x-auto rounded-xl border border-sentinel-border bg-sentinel-panel">
@@ -33,6 +42,7 @@ export default async function EventsPage(): Promise<React.ReactElement> {
             <tr>
               <th className="px-4 py-3">Time</th>
               <th className="px-4 py-3">Severity</th>
+              <th className="px-4 py-3">Project</th>
               <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3">Route</th>
               <th className="px-4 py-3">IP</th>
@@ -44,6 +54,8 @@ export default async function EventsPage(): Promise<React.ReactElement> {
           <tbody className="divide-y divide-sentinel-border/60">
             {events.map((e) => {
               const g = e.ip ? geo.get(e.ip) : null;
+              const pid = (e.metadata?.projectId as string | undefined) ?? null;
+              const project = pid ? projectMap.get(pid) : null;
               return (
                 <tr key={e.id}>
                   <td className="px-4 py-2 text-sentinel-muted">
@@ -51,6 +63,20 @@ export default async function EventsPage(): Promise<React.ReactElement> {
                   </td>
                   <td className="px-4 py-2">
                     <SeverityBadge severity={e.severity} />
+                  </td>
+                  <td className="px-4 py-2 text-xs">
+                    {project ? (
+                      <Link
+                        href={`/dashboard/projects/${project.id}`}
+                        className="text-sentinel-accent hover:underline"
+                      >
+                        {project.name}
+                      </Link>
+                    ) : pid ? (
+                      <span className="text-sentinel-muted">{pid.slice(0, 8)}…</span>
+                    ) : (
+                      <span className="text-sentinel-muted/60">local</span>
+                    )}
                   </td>
                   <td className="px-4 py-2 font-mono text-xs">{e.type}</td>
                   <td className="px-4 py-2 font-mono text-xs text-slate-300">
@@ -81,7 +107,7 @@ export default async function EventsPage(): Promise<React.ReactElement> {
             {events.length === 0 && (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   className="px-4 py-6 text-center text-sm text-sentinel-muted"
                 >
                   No events yet. Trigger a honeypot or sign in to generate one.

@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import Link from "next/link";
 import { requireSessionUser } from "@/lib/server/session";
 import { listProjectsForUser } from "@/lib/server/projects";
 import { TimeAgo } from "@/app/dashboard/_components/TimeAgo";
@@ -58,7 +59,12 @@ export default async function ProjectsPage(): Promise<React.ReactElement> {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h3 className="text-base font-semibold text-white">
-                        {p.name}
+                        <Link
+                          href={`/dashboard/projects/${p.id}`}
+                          className="hover:text-sentinel-accent"
+                        >
+                          {p.name}
+                        </Link>
                       </h3>
                       <p className="text-xs text-sentinel-muted">
                         {p.domain ? (
@@ -79,6 +85,12 @@ export default async function ProjectsPage(): Promise<React.ReactElement> {
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
+                      <Link
+                        href={`/dashboard/projects/${p.id}`}
+                        className="rounded border border-sentinel-accent/40 px-3 py-1 text-xs text-sentinel-accent hover:bg-sentinel-accent/10"
+                      >
+                        View attackers →
+                      </Link>
                       <span className="rounded-full border border-sentinel-border px-3 py-1 text-xs text-sentinel-muted">
                         {p.hits} hit{p.hits === 1 ? "" : "s"}
                       </span>

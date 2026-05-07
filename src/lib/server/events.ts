@@ -78,6 +78,20 @@ export async function listEventsForRoute(
     .sort((a, b) => b.createdAt - a.createdAt);
 }
 
+export async function listEventsForProject(
+  projectId: string,
+  limit = 500,
+): Promise<SecurityEvent[]> {
+  const snap = await adminDb
+    .collection(EVENTS)
+    .where("metadata.projectId", "==", projectId)
+    .limit(limit)
+    .get();
+  return snap.docs
+    .map((d) => d.data() as SecurityEvent)
+    .sort((a, b) => b.createdAt - a.createdAt);
+}
+
 async function createAlertFromEvent(event: SecurityEvent): Promise<void> {
   const doc = adminDb.collection(ALERTS).doc();
   const alert: AlertItem = {
