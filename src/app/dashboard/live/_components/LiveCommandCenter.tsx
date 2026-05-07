@@ -38,8 +38,8 @@ export type FeedItemWithCoords = LiveFeedItem & {
   coords: { lat: number; lon: number } | null;
 };
 
-const POLL_FEED = 4_000;
-const POLL_STATS = 5_000;
+const POLL_FEED = 15_000;
+const POLL_STATS = 30_000;
 
 export function LiveCommandCenter(): React.ReactElement {
   const [stats, setStats] = useState<LiveStats | null>(null);
@@ -98,8 +98,9 @@ export function LiveCommandCenter(): React.ReactElement {
   useEffect(() => {
     let alive = true;
     async function pull(): Promise<void> {
+      if (typeof document !== "undefined" && document.hidden) return;
       try {
-        const r = await fetch("/api/live/feed?limit=120", {
+        const r = await fetch("/api/live/feed?limit=60", {
           cache: "no-store",
         });
         if (!r.ok) return;
@@ -120,6 +121,7 @@ export function LiveCommandCenter(): React.ReactElement {
   useEffect(() => {
     let alive = true;
     async function pull(): Promise<void> {
+      if (typeof document !== "undefined" && document.hidden) return;
       try {
         const r = await fetch("/api/live/stats", { cache: "no-store" });
         if (!r.ok) return;

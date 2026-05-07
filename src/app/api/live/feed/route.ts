@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { getSessionUser } from "@/lib/server/session";
 import { getGeoForIps } from "@/lib/server/geoip";
+import { cached } from "@/lib/server/cache";
 import type { GeoInfo, SecurityEvent } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -57,19 +58,21 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!user) return NextResponse.json({ error: "auth" }, { status: 401 });
 
   const url = new URL(req.url);
-  const limit = Math.min(Number(url.searchParams.get("limit") ?? 40), 200);
+  const limit = Math.min(Number(url.searchParams.get("limit") ?? 40), 80);
 
-  const snap = await adminDb
-    .collection("security_events")
-    .orderBy("createdAt", "desc")
-    .limit(limit)
-    .get();
-  const events = snap.docs.map((d) => d.data() as SecurityEvent);
-  const ips = events.map((e) => e.ip).filter((ip): ip is string => !!ip);
-  const geoMap = await getGeoForIps(ips);
+  // Cache the feed for 15s — clients poll every 8s now, so each poll mostly
+  // hits the cache. Also caps Firestore reads to ~`limit` per cache miss.
+  const items = await cached(`live:feed:${limit}`, 15_000, async () => {
+    const snap = await adminDb
+      .collection("security_events")
+      .orderBy("createdAt", "desc")
+      .limit(limit)
+      .get();
+    const events = snap.docs.map((d) => d.data() as SecurityEvent);
+    const ips = events.map((e) => e.ip).filter((ip): ip is string => !!ip);
+    const geoMap = await getGeoForIps(ips);
 
-  const items: (LiveFeedItem & { coords: { lat: number; lon: number } | null })[] =
-    events.map((e) => {
+    return events.map((e) => {
       const geo = e.ip ? geoMap.get(e.ip) : undefined;
       const meta = e.metadata ?? {};
       const projectId = typeof meta.projectId === "string" ? meta.projectId : null;
@@ -97,6 +100,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         coords: coordsFor(geo),
       };
     });
+  });
 
   return NextResponse.json({ items, serverTime: Date.now() });
 }
