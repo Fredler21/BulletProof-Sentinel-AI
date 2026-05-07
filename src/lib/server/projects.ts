@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
+import { isQuotaError, shouldDoAuxWrite } from "@/lib/server/quotaGuard";
 import type { HoneypotProject } from "@/lib/types";
 
 const COL = "honeypot_projects";
@@ -77,12 +78,20 @@ export async function findProjectByApiKey(
 }
 
 export async function bumpProjectHits(id: string): Promise<void> {
+  // Throttle: at most one hit increment per project per 30s. Real attacker
+  // counts are still visible via the events collection; this just prevents
+  // a flood from burning Firestore writes on a single counter doc.
+  if (!shouldDoAuxWrite(`project:${id}`, 30_000)) return;
   try {
     await adminDb
       .collection(COL)
       .doc(id)
       .update({ hits: FieldValue.increment(1), lastHitAt: Date.now() });
-  } catch {
+  } catch (err) {
+    if (isQuotaError(err)) {
+      // eslint-disable-next-line no-console
+      console.warn("[quota] bumpProjectHits skipped — RESOURCE_EXHAUSTED");
+    }
     /* never block */
   }
 }

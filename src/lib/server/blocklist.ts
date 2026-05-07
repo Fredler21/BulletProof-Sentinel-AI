@@ -1,4 +1,5 @@
 import { adminDb } from "@/lib/firebase/admin";
+import { shouldDoAuxWrite } from "@/lib/server/quotaGuard";
 import type { BlockedIp, BlockSource } from "@/lib/types";
 
 const COL = "blocked_ips";
@@ -55,15 +56,18 @@ export async function isIpBlocked(ip: string | null): Promise<boolean> {
     if (data.expiresAt != null && data.expiresAt <= Date.now()) {
       return false;
     }
-    // fire-and-forget hit counter
-    void snap.ref
-      .update({
-        hits: (data.hits ?? 0) + 1,
-        lastAttemptAt: Date.now(),
-      })
-      .catch(() => {
-        /* ignore */
-      });
+    // Throttled fire-and-forget hit counter — at most once per IP per 60s
+    // to avoid one write per request from the same scanner.
+    if (shouldDoAuxWrite(`blocklist:${ip}`, 60_000)) {
+      void snap.ref
+        .update({
+          hits: (data.hits ?? 0) + 1,
+          lastAttemptAt: Date.now(),
+        })
+        .catch(() => {
+          /* ignore */
+        });
+    }
     return true;
   } catch {
     return false;

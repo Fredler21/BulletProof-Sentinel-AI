@@ -1,5 +1,10 @@
 import { adminDb } from "@/lib/firebase/admin";
 import { applyAutoRules } from "@/lib/server/autoRules";
+import {
+  isInQuotaBackoff,
+  isQuotaError,
+  markQuotaExceeded,
+} from "@/lib/server/quotaGuard";
 import type {
   AlertItem,
   SecurityEvent,
@@ -38,16 +43,45 @@ export async function recordSecurityEvent(
     createdAt: now,
     ownerUid: input.ownerUid ?? null,
   };
-  await doc.set(event);
+
+  // If we recently saw a quota-exceeded error, skip writes for the backoff
+  // window so we don't keep hammering Firestore (which both wastes the rate
+  // limit and slows the trap response).
+  if (isInQuotaBackoff()) {
+    return event;
+  }
+
+  try {
+    await doc.set(event);
+  } catch (err) {
+    if (isQuotaError(err)) {
+      markQuotaExceeded();
+      // eslint-disable-next-line no-console
+      console.warn(
+        "[quota] Firestore write skipped — RESOURCE_EXHAUSTED. Backing off.",
+      );
+      return event;
+    }
+    // eslint-disable-next-line no-console
+    console.error("[recordSecurityEvent] write failed", err);
+    return event;
+  }
 
   if (input.severity === "high" || input.severity === "critical") {
-    await createAlertFromEvent(event);
+    try {
+      await createAlertFromEvent(event);
+    } catch (err) {
+      if (isQuotaError(err)) markQuotaExceeded();
+      // eslint-disable-next-line no-console
+      else console.error("[recordSecurityEvent] alert write failed", err);
+    }
   }
 
   // Best-effort: run autonomous response rules (auto-block, etc.)
   try {
     await applyAutoRules(event);
-  } catch {
+  } catch (err) {
+    if (isQuotaError(err)) markQuotaExceeded();
     /* never block event recording */
   }
 

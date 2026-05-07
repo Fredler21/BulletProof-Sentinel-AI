@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { recordSecurityEvent } from "@/lib/server/events";
 import { bumpProjectHits, findProjectByApiKey } from "@/lib/server/projects";
 import { isIpBlocked } from "@/lib/server/blocklist";
+import { shouldRecordHoneypotHit } from "@/lib/server/quotaGuard";
 import { getRequestIp, getRequestUserAgent } from "@/lib/server/request";
 import type { BeaconPayload, ThreatSeverity } from "@/lib/types";
 
@@ -33,28 +34,6 @@ function pickSeverity(payload: BeaconPayload): ThreatSeverity {
   // still surfaces in the live console without spamming alerts.
   if (payload.username || (payload.passwordLength ?? 0) > 0) return "high";
   return "medium";
-}
-
-function sanitizeMetadata(
-  m: BeaconPayload["metadata"],
-): Record<string, string | number | boolean | null> {
-  const out: Record<string, string | number | boolean | null> = {};
-  if (!m) return out;
-  let count = 0;
-  for (const [k, v] of Object.entries(m)) {
-    if (count++ >= 25) break;
-    const key = String(k).slice(0, 60);
-    if (
-      v === null ||
-      typeof v === "boolean" ||
-      typeof v === "number"
-    ) {
-      out[key] = v;
-    } else if (typeof v === "string") {
-      out[key] = v.slice(0, 500);
-    }
-  }
-  return out;
 }
 
 export async function OPTIONS(): Promise<Response> {
@@ -129,8 +108,26 @@ export async function POST(req: NextRequest): Promise<Response> {
       ? `Embedded honeypot credential attempt on ${path}: ${username || "(empty)"} / ${passwordLength ? "***" : "(empty)"}`
       : `Embedded honeypot triggered: ${path}`);
 
+  // Quota guard: dedupe (10-min window) + per-IP rate limit. Always return
+  // success to the attacker so the trap behaviour is unchanged.
+  const isCred = Boolean(username || passwordLength);
+  const guard = shouldRecordHoneypotHit({
+    projectId: project.id,
+    ip,
+    // Treat credential attempts as distinct events so unique creds still log.
+    path: isCred ? `${path}#cred:${username || ""}:${passwordLength}` : path,
+  });
+  if (!guard.allow) {
+    return withCors(
+      NextResponse.json(
+        { ok: true, deduped: true, reason: guard.reason },
+        { status: 202 },
+      ),
+    );
+  }
+
+  // Trim metadata to only the important fields to keep doc size small.
   const metadata = {
-    ...sanitizeMetadata(body.metadata),
     projectId: project.id,
     projectName: project.name,
     projectDomain: project.domain,
@@ -140,20 +137,27 @@ export async function POST(req: NextRequest): Promise<Response> {
     ...(passwordLength ? { passwordLength } : {}),
   };
 
-  const event = await recordSecurityEvent({
-    type: username || passwordLength ? "honeypot.credentials" : "honeypot.trigger",
-    severity,
-    message: baseMessage,
-    ip,
-    userAgent,
-    route: path,
-    ownerUid: project.ownerUid,
-    metadata,
-  });
+  let eventId: string | null = null;
+  try {
+    const event = await recordSecurityEvent({
+      type: isCred ? "honeypot.credentials" : "honeypot.trigger",
+      severity,
+      message: baseMessage,
+      ip,
+      userAgent,
+      route: path,
+      ownerUid: project.ownerUid,
+      metadata,
+    });
+    eventId = event.id;
+  } catch {
+    /* swallow — never break the trap */
+  }
 
+  // bumpProjectHits is internally throttled.
   await bumpProjectHits(project.id);
 
   return withCors(
-    NextResponse.json({ ok: true, eventId: event.id, severity }, { status: 201 }),
+    NextResponse.json({ ok: true, eventId, severity }, { status: 201 }),
   );
 }

@@ -51,10 +51,11 @@ async function saveActivity(activity: IpActivity): Promise<void> {
 export async function applyAutoRules(event: SecurityEvent): Promise<void> {
   if (!event.ip) return;
   // Auto-blocking is OFF by default. Set AUTO_BLOCK_ENABLED=true to re-enable.
-  // When disabled we still record activity counters so the dashboard can show
-  // attacker behaviour, but we never call blockIp() automatically.
+  // When disabled we skip ALL Firestore reads/writes here to protect quota —
+  // the dashboard already shows attacker behaviour from the events themselves.
   const autoBlockEnabled =
     (process.env.AUTO_BLOCK_ENABLED ?? "").toLowerCase() === "true";
+  if (!autoBlockEnabled) return;
 
   // Already blocked? skip.
   const existing = await getBlockedIp(event.ip);

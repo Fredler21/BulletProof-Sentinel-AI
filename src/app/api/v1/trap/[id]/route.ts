@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { recordSecurityEvent } from "@/lib/server/events";
 import { bumpProjectHits, findProjectById } from "@/lib/server/projects";
 import { isIpBlocked } from "@/lib/server/blocklist";
+import { shouldRecordHoneypotHit } from "@/lib/server/quotaGuard";
 import { getRequestIp, getRequestUserAgent } from "@/lib/server/request";
 
 export const runtime = "nodejs";
@@ -85,39 +86,56 @@ async function logHit(
   const project = await findProjectById(trapId);
   if (!project) return;
   const ip = getRequestIp(req);
+  const credAttempt = !!(body && (body.username || body.password));
+
+  // Quota guard: dedupe + rate-limit BEFORE any Firestore writes.
+  // Treat each unique credential pair as distinct so real bruteforce attempts
+  // are still captured, but hammering GETs collapse into one event.
+  const guard = shouldRecordHoneypotHit({
+    projectId: project.id,
+    ip,
+    path: credAttempt
+      ? `/trap/${trapId}#cred:${body!.username || ""}:${body!.password.length}`
+      : `/trap/${trapId}#view`,
+  });
+  if (!guard.allow) return;
+
   const userAgent = getRequestUserAgent(req);
   const referer = req.headers.get("referer");
   const host = req.headers.get("host");
-  const credAttempt = !!(body && (body.username || body.password));
 
-  await recordSecurityEvent({
-    type: credAttempt ? "honeypot.credentials" : "honeypot.trigger",
-    severity: credAttempt ? "high" : "medium",
-    message: credAttempt
-      ? `Hosted trap credential attempt (${project.name}): ${
-          body!.username || "(empty)"
-        } / ${body!.password ? "***" : "(empty)"}`
-      : `Hosted trap viewed: ${project.name}`,
-    ip,
-    userAgent,
-    route: `/api/v1/trap/${trapId}`,
-    ownerUid: project.ownerUid,
-    metadata: {
-      projectId: project.id,
-      projectName: project.name,
-      projectDomain: project.domain,
-      hostedTrap: true,
-      method: body ? "POST" : "GET",
-      referer: referer ? referer.slice(0, 300) : null,
-      requestHost: host ? host.slice(0, 200) : null,
-      ...(body
-        ? {
-            username: body.username.slice(0, 200),
-            passwordLength: body.password.length,
-          }
-        : {}),
-    },
-  });
+  try {
+    await recordSecurityEvent({
+      type: credAttempt ? "honeypot.credentials" : "honeypot.trigger",
+      severity: credAttempt ? "high" : "medium",
+      message: credAttempt
+        ? `Hosted trap credential attempt (${project.name}): ${
+            body!.username || "(empty)"
+          } / ${body!.password ? "***" : "(empty)"}`
+        : `Hosted trap viewed: ${project.name}`,
+      ip,
+      userAgent,
+      route: `/api/v1/trap/${trapId}`,
+      ownerUid: project.ownerUid,
+      metadata: {
+        projectId: project.id,
+        projectName: project.name,
+        projectDomain: project.domain,
+        hostedTrap: true,
+        method: body ? "POST" : "GET",
+        referer: referer ? referer.slice(0, 200) : null,
+        requestHost: host ? host.slice(0, 120) : null,
+        ...(body
+          ? {
+              username: body.username.slice(0, 200),
+              passwordLength: body.password.length,
+            }
+          : {}),
+      },
+    });
+  } catch {
+    /* never break the trap */
+  }
   await bumpProjectHits(project.id);
 }
 
