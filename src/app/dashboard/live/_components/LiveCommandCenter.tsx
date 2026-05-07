@@ -75,7 +75,7 @@ export function LiveCommandCenter(): React.ReactElement {
       (i) => i.severity === "high" || i.severity === "critical",
     ).length;
     const honey = recent.filter((i) => i.type?.startsWith("honeypot")).length;
-    const cmds = recent.filter((i) => i.type === "honeypot.command").length;
+    const cmds = recent.filter((i) => i.type === "honeypot.trigger").length;
     const epm = filteredItems.filter((i) => i.createdAt >= oneMinAgo).length;
     const riskScore = Math.min(
       100,
