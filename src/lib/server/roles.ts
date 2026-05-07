@@ -1,4 +1,6 @@
 import { adminDb } from "@/lib/firebase/admin";
+import { cached } from "@/lib/server/cache";
+import { isQuotaError, markQuotaExceeded } from "@/lib/server/quotaGuard";
 import { getSessionUser, requireSessionUser } from "@/lib/server/session";
 import type { SessionUser, UserRole, UserRoleDoc } from "@/lib/types";
 
@@ -17,34 +19,59 @@ const RANK: Record<UserRole, number> = {
 };
 
 export async function getUserRole(uid: string): Promise<UserRoleDoc | null> {
-  const snap = await adminDb.collection(COL).doc(uid).get();
-  return (snap.data() as UserRoleDoc | undefined) ?? null;
+  return cached(`role:${uid}`, 5 * 60_000, async () => {
+    try {
+      const snap = await adminDb.collection(COL).doc(uid).get();
+      return (snap.data() as UserRoleDoc | undefined) ?? null;
+    } catch (err) {
+      if (isQuotaError(err)) markQuotaExceeded();
+      return null;
+    }
+  });
+}
+
+function fallbackRole(user: SessionUser): UserRoleDoc {
+  const isBootstrap =
+    !!user.email && BOOTSTRAP_EMAILS.includes(user.email.toLowerCase());
+  return {
+    uid: user.uid,
+    email: user.email,
+    role: isBootstrap ? "super-admin" : "viewer",
+    assignedByUid: null,
+    updatedAt: Date.now(),
+  };
 }
 
 export async function ensureRoleForUser(
   user: SessionUser,
 ): Promise<UserRoleDoc> {
-  const existing = await getUserRole(user.uid);
-  if (existing) return existing;
-  const isBootstrap =
-    !!user.email && BOOTSTRAP_EMAILS.includes(user.email.toLowerCase());
-  // First-ever user becomes super-admin if no roles assigned yet.
-  let role: UserRole = "viewer";
-  if (isBootstrap) {
-    role = "super-admin";
-  } else {
-    const any = await adminDb.collection(COL).limit(1).get();
-    if (any.empty) role = "super-admin";
+  try {
+    const existing = await getUserRole(user.uid);
+    if (existing) return existing;
+    const isBootstrap =
+      !!user.email && BOOTSTRAP_EMAILS.includes(user.email.toLowerCase());
+    // First-ever user becomes super-admin if no roles assigned yet.
+    let role: UserRole = "viewer";
+    if (isBootstrap) {
+      role = "super-admin";
+    } else {
+      const any = await adminDb.collection(COL).limit(1).get();
+      if (any.empty) role = "super-admin";
+    }
+    const doc: UserRoleDoc = {
+      uid: user.uid,
+      email: user.email,
+      role,
+      assignedByUid: null,
+      updatedAt: Date.now(),
+    };
+    await adminDb.collection(COL).doc(user.uid).set(doc);
+    return doc;
+  } catch (err) {
+    if (isQuotaError(err)) markQuotaExceeded();
+    // Never block dashboard rendering on a quota / Firestore failure.
+    return fallbackRole(user);
   }
-  const doc: UserRoleDoc = {
-    uid: user.uid,
-    email: user.email,
-    role,
-    assignedByUid: null,
-    updatedAt: Date.now(),
-  };
-  await adminDb.collection(COL).doc(user.uid).set(doc);
-  return doc;
 }
 
 export async function getCurrentRole(): Promise<UserRoleDoc | null> {
