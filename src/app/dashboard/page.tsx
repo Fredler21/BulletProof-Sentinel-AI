@@ -35,18 +35,30 @@ function computeStats(events: SecurityEvent[], traps: HoneypotTrap[]): Dashboard
 
 export default async function DashboardOverview(): Promise<React.ReactElement> {
   const user = await requireSessionUser();
-  const [events, traps, alerts, projects] = await Promise.all([
-    listRecentEvents(100),
-    listTraps(),
-    listRecentAlerts(10),
-    listProjectsForUser(user.uid),
-  ]);
+  const [eventsResult, trapsResult, alertsResult, projectsResult] =
+    await Promise.allSettled([
+      listRecentEvents(100),
+      listTraps(),
+      listRecentAlerts(10),
+      listProjectsForUser(user.uid),
+    ]);
+  const events: SecurityEvent[] =
+    eventsResult.status === "fulfilled" ? eventsResult.value : [];
+  const traps: HoneypotTrap[] =
+    trapsResult.status === "fulfilled" ? trapsResult.value : [];
+  const alerts: AlertItem[] =
+    alertsResult.status === "fulfilled" ? alertsResult.value : [];
+  const projects: HoneypotProject[] =
+    projectsResult.status === "fulfilled" ? projectsResult.value : [];
   const stats = computeStats(events, traps);
 
   // Recent attacker IPs per project (from in-memory events).
   const projectAttackers = new Map<string, { ip: string; lastSeen: number }[]>();
   for (const e of events) {
-    const pid = (e.metadata?.projectId as string | undefined) ?? null;
+    const meta =
+      e.metadata && typeof e.metadata === "object" ? e.metadata : null;
+    const pidRaw = meta ? (meta as Record<string, unknown>).projectId : null;
+    const pid = typeof pidRaw === "string" ? pidRaw : null;
     if (!pid || !e.ip) continue;
     const list = projectAttackers.get(pid) ?? [];
     if (!list.some((x) => x.ip === e.ip)) {
