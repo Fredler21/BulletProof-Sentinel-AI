@@ -3,6 +3,7 @@ import { triggerTrap } from "@/lib/server/honeypots";
 import { isIpBlocked } from "@/lib/server/blocklist";
 import { getRequestIp, getRequestUserAgent } from "@/lib/server/request";
 import { pickTaunt } from "@/lib/server/honeypotTaunts";
+import { isSentinelOperator } from "@/lib/server/operator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -171,7 +172,11 @@ export async function respondAsDecoy(
     });
   }
 
-  await triggerTrap(pathname, { ip, userAgent, method: req.method });
+  // Don't log Sentinel operators (logged-in dashboard users) as attackers
+  // when they're previewing/testing the decoys themselves.
+  if (!(await isSentinelOperator())) {
+    await triggerTrap(pathname, { ip, userAgent, method: req.method });
+  }
 
   const taunt = pickTaunt(ip);
   const kind = detectKind(pathname);

@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { triggerTrap } from "@/lib/server/honeypots";
 import { isIpBlocked } from "@/lib/server/blocklist";
 import { pickTaunt } from "@/lib/server/honeypotTaunts";
+import { isSentinelOperator } from "@/lib/server/operator";
 
 export const dynamic = "force-dynamic";
 
@@ -34,11 +35,14 @@ export default async function HoneypotWpLoginPage({
     );
   }
 
-  await triggerTrap("/honeypot/wp-login", {
-    ip,
-    userAgent: h.get("user-agent"),
-    method: "GET",
-  });
+  const isOperator = await isSentinelOperator();
+  if (!isOperator) {
+    await triggerTrap("/honeypot/wp-login", {
+      ip,
+      userAgent: h.get("user-agent"),
+      method: "GET",
+    });
+  }
   const taunt = pickTaunt(ip);
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f1f1f1] px-6 py-16 text-slate-900">

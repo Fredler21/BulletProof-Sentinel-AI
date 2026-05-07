@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { triggerTrap } from "@/lib/server/honeypots";
 import { isIpBlocked } from "@/lib/server/blocklist";
 import { pickTaunt } from "@/lib/server/honeypotTaunts";
+import { isSentinelOperator } from "@/lib/server/operator";
 
 export const dynamic = "force-dynamic";
 
@@ -36,11 +37,16 @@ export default async function HoneypotAdminPage({
   const sp = await searchParams;
   if (await isIpBlocked(ip)) return <BlockedScreen />;
 
-  await triggerTrap("/honeypot/admin", {
-    ip,
-    userAgent: h.get("user-agent"),
-    method: "GET",
-  });
+  // Don't count Sentinel operators (logged-in dashboard users) as attackers
+  // when they're just browsing/testing the trap.
+  const isOperator = await isSentinelOperator();
+  if (!isOperator) {
+    await triggerTrap("/honeypot/admin", {
+      ip,
+      userAgent: h.get("user-agent"),
+      method: "GET",
+    });
+  }
   const taunt = pickTaunt(ip);
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-16 text-slate-200">

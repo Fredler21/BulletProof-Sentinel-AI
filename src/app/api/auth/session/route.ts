@@ -9,6 +9,18 @@ import { getRequestIp, getRequestUserAgent } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
+// Comma-separated list of email addresses allowed to log in or sign up.
+// Empty / unset = no allowlist (anyone can sign in).
+const ALLOWED_EMAILS = (process.env.SENTINEL_ALLOWED_EMAILS ?? "")
+  .split(",")
+  .map((s) => s.trim().toLowerCase())
+  .filter(Boolean);
+
+function isEmailAllowed(email: string | null | undefined): boolean {
+  if (ALLOWED_EMAILS.length === 0) return true;
+  if (!email) return false;
+  return ALLOWED_EMAILS.includes(email.toLowerCase());
+}
 
 interface SessionBody {
   idToken: string;
@@ -28,6 +40,26 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   try {
     const decoded = await adminAuth.verifyIdToken(body.idToken, true);
+
+    // Email allowlist gate: if SENTINEL_ALLOWED_EMAILS is set, only those
+    // addresses may sign in / sign up. Everyone else is rejected and the
+    // attempt is logged as a high-severity event.
+    if (!isEmailAllowed(decoded.email)) {
+      await recordSecurityEvent({
+        type: "auth.login.failure",
+        severity: "high",
+        message: `Login blocked by allowlist: ${decoded.email ?? decoded.uid}`,
+        ip: getRequestIp(req),
+        userAgent: getRequestUserAgent(req),
+        route: "/api/auth/session",
+        metadata: { email: decoded.email ?? null, uid: decoded.uid },
+      });
+      return NextResponse.json(
+        { error: "email_not_allowed" },
+        { status: 403 },
+      );
+    }
+
     const { cookie, expiresIn } = await createSessionCookie(body.idToken);
 
     const res = NextResponse.json({ ok: true });

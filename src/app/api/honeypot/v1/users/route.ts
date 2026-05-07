@@ -3,6 +3,7 @@ import { triggerTrap } from "@/lib/server/honeypots";
 import { isIpBlocked } from "@/lib/server/blocklist";
 import { getRequestIp, getRequestUserAgent } from "@/lib/server/request";
 import { pickTaunt } from "@/lib/server/honeypotTaunts";
+import { isSentinelOperator } from "@/lib/server/operator";
 
 export const dynamic = "force-dynamic";
 
@@ -18,11 +19,13 @@ async function handle(req: NextRequest): Promise<Response> {
       { status: 403 },
     );
   }
-  await triggerTrap("/api/honeypot/v1/users", {
-    ip,
-    userAgent: getRequestUserAgent(req),
-    method: req.method,
-  });
+  if (!(await isSentinelOperator())) {
+    await triggerTrap("/api/honeypot/v1/users", {
+      ip,
+      userAgent: getRequestUserAgent(req),
+      method: req.method,
+    });
+  }
   return NextResponse.json(
     {
       error: "internal_error",

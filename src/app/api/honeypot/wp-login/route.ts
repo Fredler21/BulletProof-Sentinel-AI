@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { triggerTrap } from "@/lib/server/honeypots";
 import { recordSecurityEvent } from "@/lib/server/events";
 import { getRequestIp, getRequestUserAgent } from "@/lib/server/request";
+import { isSentinelOperator } from "@/lib/server/operator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,20 +20,23 @@ async function handle(req: NextRequest, path: string): Promise<Response> {
     /* ignore body parse errors */
   }
 
-  await triggerTrap(path, { ip, userAgent, method: "POST" });
-  // Record the credential-attempt with metadata so it shows up clearly in the
-  // live console as a high-value event.
-  await recordSecurityEvent({
-    type: "honeypot.credentials",
-    severity: "high",
-    message: `Credential attempt on ${path}: ${username || "(empty)"} / ${
-      password ? "***" : "(empty)"
-    }`,
-    ip,
-    userAgent,
-    route: path,
-    metadata: { username, passwordLength: password.length },
-  });
+  const isOperator = await isSentinelOperator();
+  if (!isOperator) {
+    await triggerTrap(path, { ip, userAgent, method: "POST" });
+    // Record the credential-attempt with metadata so it shows up clearly in the
+    // live console as a high-value event.
+    await recordSecurityEvent({
+      type: "honeypot.credentials",
+      severity: "high",
+      message: `Credential attempt on ${path}: ${username || "(empty)"} / ${
+        password ? "***" : "(empty)"
+      }`,
+      ip,
+      userAgent,
+      route: path,
+      metadata: { username, passwordLength: password.length },
+    });
+  }
 
   // Redirect back to the same fake login showing an "incorrect credentials"
   // banner, mimicking real WordPress / admin behaviour to keep attackers
