@@ -1,4 +1,5 @@
 import { adminDb } from "@/lib/firebase/admin";
+import { cached, invalidate } from "@/lib/server/cache";
 import { shouldDoAuxWrite } from "@/lib/server/quotaGuard";
 import type { BlockedIp, BlockSource } from "@/lib/types";
 
@@ -31,20 +32,24 @@ export async function blockIp(input: BlockIpInput): Promise<BlockedIp> {
     lastAttemptAt: null,
   };
   await adminDb.collection(COL).doc(sanitizeIpId(input.ip)).set(record);
+  invalidate("blocklist:all");
   return record;
 }
 
 export async function unblockIp(ip: string): Promise<void> {
   await adminDb.collection(COL).doc(sanitizeIpId(ip)).delete();
+  invalidate("blocklist:all");
 }
 
 export async function listBlockedIps(): Promise<BlockedIp[]> {
-  const snap = await adminDb.collection(COL).get();
-  const now = Date.now();
-  return snap.docs
-    .map((d) => d.data() as BlockedIp)
-    .filter((b) => b.expiresAt == null || b.expiresAt > now)
-    .sort((a, b) => b.createdAt - a.createdAt);
+  return cached("blocklist:all", 30_000, async () => {
+    const snap = await adminDb.collection(COL).get();
+    const now = Date.now();
+    return snap.docs
+      .map((d) => d.data() as BlockedIp)
+      .filter((b) => b.expiresAt == null || b.expiresAt > now)
+      .sort((a, b) => b.createdAt - a.createdAt);
+  });
 }
 
 export async function isIpBlocked(ip: string | null): Promise<boolean> {

@@ -1,5 +1,7 @@
 import { adminDb } from "@/lib/firebase/admin";
+import { Timestamp } from "firebase-admin/firestore";
 import { applyAutoRules } from "@/lib/server/autoRules";
+import { cached } from "@/lib/server/cache";
 import {
   isInQuotaBackoff,
   isQuotaError,
@@ -31,6 +33,8 @@ export async function recordSecurityEvent(
 ): Promise<SecurityEvent> {
   const now = Date.now();
   const doc = adminDb.collection(EVENTS).doc();
+  // 30 day retention via Firestore TTL on the `expiresAt` field.
+  const expiresAt = Timestamp.fromMillis(now + 30 * 24 * 60 * 60 * 1000);
   const event: SecurityEvent = {
     id: doc.id,
     type: input.type,
@@ -52,7 +56,8 @@ export async function recordSecurityEvent(
   }
 
   try {
-    await doc.set(event);
+    // Persist with the TTL helper field alongside the typed payload.
+    await doc.set({ ...event, expiresAt });
   } catch (err) {
     if (isQuotaError(err)) {
       markQuotaExceeded();
@@ -89,41 +94,48 @@ export async function recordSecurityEvent(
 }
 
 export async function listRecentEvents(limit = 50): Promise<SecurityEvent[]> {
-  const snap = await adminDb
-    .collection(EVENTS)
-    .orderBy("createdAt", "desc")
-    .limit(limit)
-    .get();
-  return snap.docs.map((d) => d.data() as SecurityEvent);
+  // Cache 20s — dashboard pages re-render frequently and this absorbs reloads.
+  return cached(`events:recent:${limit}`, 20_000, async () => {
+    const snap = await adminDb
+      .collection(EVENTS)
+      .orderBy("createdAt", "desc")
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => d.data() as SecurityEvent);
+  });
 }
 
 export async function listEventsForRoute(
   route: string,
   limit = 200,
 ): Promise<SecurityEvent[]> {
-  // Avoid composite index requirement: filter by route, sort in memory.
-  const snap = await adminDb
-    .collection(EVENTS)
-    .where("route", "==", route)
-    .limit(limit)
-    .get();
-  return snap.docs
-    .map((d) => d.data() as SecurityEvent)
-    .sort((a, b) => b.createdAt - a.createdAt);
+  return cached(`events:route:${route}:${limit}`, 30_000, async () => {
+    // Avoid composite index requirement: filter by route, sort in memory.
+    const snap = await adminDb
+      .collection(EVENTS)
+      .where("route", "==", route)
+      .limit(limit)
+      .get();
+    return snap.docs
+      .map((d) => d.data() as SecurityEvent)
+      .sort((a, b) => b.createdAt - a.createdAt);
+  });
 }
 
 export async function listEventsForProject(
   projectId: string,
   limit = 500,
 ): Promise<SecurityEvent[]> {
-  const snap = await adminDb
-    .collection(EVENTS)
-    .where("metadata.projectId", "==", projectId)
-    .limit(limit)
-    .get();
-  return snap.docs
-    .map((d) => d.data() as SecurityEvent)
-    .sort((a, b) => b.createdAt - a.createdAt);
+  return cached(`events:project:${projectId}:${limit}`, 30_000, async () => {
+    const snap = await adminDb
+      .collection(EVENTS)
+      .where("metadata.projectId", "==", projectId)
+      .limit(limit)
+      .get();
+    return snap.docs
+      .map((d) => d.data() as SecurityEvent)
+      .sort((a, b) => b.createdAt - a.createdAt);
+  });
 }
 
 async function createAlertFromEvent(event: SecurityEvent): Promise<void> {
@@ -145,12 +157,14 @@ async function createAlertFromEvent(event: SecurityEvent): Promise<void> {
 }
 
 export async function listRecentAlerts(limit = 25): Promise<AlertItem[]> {
-  const snap = await adminDb
-    .collection(ALERTS)
-    .orderBy("createdAt", "desc")
-    .limit(limit)
-    .get();
-  return snap.docs.map((d) => d.data() as AlertItem);
+  return cached(`alerts:recent:${limit}`, 20_000, async () => {
+    const snap = await adminDb
+      .collection(ALERTS)
+      .orderBy("createdAt", "desc")
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => d.data() as AlertItem);
+  });
 }
 
 export async function acknowledgeAlert(id: string): Promise<void> {

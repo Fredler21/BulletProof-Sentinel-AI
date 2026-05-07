@@ -76,7 +76,7 @@ export default async function ProjectDetailPage(
     notFound();
   }
 
-  const events = await listEventsForProject(id, 500);
+  const events = await listEventsForProject(id, 150);
   const attackers = summarizeAttackers(events);
   const ips = attackers.map((a) => a.ip);
   const [geo, blocks] = await Promise.all([

@@ -37,7 +37,7 @@ export default async function DashboardOverview(): Promise<React.ReactElement> {
   const user = await requireSessionUser();
   const [eventsResult, trapsResult, alertsResult, projectsResult] =
     await Promise.allSettled([
-      listRecentEvents(100),
+      listRecentEvents(50),
       listTraps(),
       listRecentAlerts(10),
       listProjectsForUser(user.uid),

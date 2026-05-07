@@ -78,7 +78,7 @@ export default async function HoneypotDetailPage({
   if (!trap) notFound();
 
   // Pull both honeypot.trigger and honeypot.credentials events for this path.
-  const events = await listEventsForRoute(trap.path, 500);
+  const events = await listEventsForRoute(trap.path, 150);
   const ips = rollupByIp(events);
 
   const blocked = await listBlockedIps();

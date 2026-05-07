@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
+import { cached } from "@/lib/server/cache";
 import { isQuotaError, shouldDoAuxWrite } from "@/lib/server/quotaGuard";
 import type { HoneypotProject } from "@/lib/types";
 
@@ -47,13 +48,15 @@ export async function createProject(
 export async function listProjectsForUser(
   ownerUid: string,
 ): Promise<HoneypotProject[]> {
-  const snap = await adminDb
-    .collection(COL)
-    .where("ownerUid", "==", ownerUid)
-    .get();
-  return snap.docs
-    .map((d) => d.data() as HoneypotProject)
-    .sort((a, b) => b.createdAt - a.createdAt);
+  return cached(`projects:user:${ownerUid}`, 60_000, async () => {
+    const snap = await adminDb
+      .collection(COL)
+      .where("ownerUid", "==", ownerUid)
+      .get();
+    return snap.docs
+      .map((d) => d.data() as HoneypotProject)
+      .sort((a, b) => b.createdAt - a.createdAt);
+  });
 }
 
 export async function findProjectById(

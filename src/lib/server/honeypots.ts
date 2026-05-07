@@ -1,4 +1,5 @@
 import { adminDb } from "@/lib/firebase/admin";
+import { cached } from "@/lib/server/cache";
 import type { HoneypotTrap } from "@/lib/types";
 import { recordSecurityEvent } from "@/lib/server/events";
 
@@ -45,9 +46,11 @@ export async function ensureDefaultTraps(): Promise<void> {
 }
 
 export async function listTraps(): Promise<HoneypotTrap[]> {
-  await ensureDefaultTraps();
-  const snap = await adminDb.collection(TRAPS).orderBy("createdAt").get();
-  return snap.docs.map((d) => d.data() as HoneypotTrap);
+  return cached("honeypots:traps", 60_000, async () => {
+    await ensureDefaultTraps();
+    const snap = await adminDb.collection(TRAPS).orderBy("createdAt").get();
+    return snap.docs.map((d) => d.data() as HoneypotTrap);
+  });
 }
 
 export async function triggerTrap(
