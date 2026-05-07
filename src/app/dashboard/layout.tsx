@@ -23,6 +23,7 @@ const NAV_GROUPS: {
     items: [
       { href: "/dashboard/scanner", label: "Scanner", icon: "◎" },
       { href: "/dashboard/honeypots", label: "Honeypots", icon: "✸" },
+      { href: "/dashboard/projects", label: "Embed API", icon: "⌬" },
       { href: "/dashboard/blocklist", label: "Blocklist", icon: "⛔" },
     ],
   },

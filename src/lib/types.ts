@@ -272,3 +272,28 @@ export interface ComplianceFrameworkSummary {
   total: number;
   scorePct: number;
 }
+
+// ---------- Phase 6 — Embeddable Honeypot API ----------
+
+export interface HoneypotProject {
+  id: string;
+  ownerUid: string;
+  name: string;
+  domain: string | null;
+  apiKeyPrefix: string; // e.g. "bps_live_abc"
+  apiKeyHash: string;   // sha256 of the full key
+  createdAt: number;
+  hits: number;
+  lastHitAt: number | null;
+}
+
+export interface BeaconPayload {
+  path: string;
+  method?: string;
+  ip?: string | null;
+  userAgent?: string | null;
+  username?: string | null;
+  passwordLength?: number | null;
+  message?: string | null;
+  metadata?: Record<string, string | number | boolean | null>;
+}
