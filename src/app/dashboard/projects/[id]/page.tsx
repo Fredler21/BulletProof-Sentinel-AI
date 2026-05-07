@@ -112,6 +112,36 @@ export default async function ProjectDetailPage(
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-sentinel-border bg-sentinel-panel/60 p-3 text-xs">
+        <span className="font-semibold uppercase tracking-wide text-sentinel-muted">
+          Export this project:
+        </span>
+        <a
+          href={`/api/v1/projects/${project.id}/report?format=md`}
+          className="rounded border border-sentinel-accent/40 px-3 py-1 text-sentinel-accent hover:bg-sentinel-accent/10"
+          download
+        >
+          Markdown report
+        </a>
+        <a
+          href={`/api/v1/projects/${project.id}/report?format=csv`}
+          className="rounded border border-sentinel-border px-3 py-1 text-slate-200 hover:border-sentinel-accent hover:text-sentinel-accent"
+          download
+        >
+          CSV (events)
+        </a>
+        <a
+          href={`/api/v1/projects/${project.id}/report?format=json`}
+          className="rounded border border-sentinel-border px-3 py-1 text-slate-200 hover:border-sentinel-accent hover:text-sentinel-accent"
+          download
+        >
+          JSON (raw)
+        </a>
+        <span className="ml-auto text-[11px] text-sentinel-muted">
+          File name will be <span className="font-mono">sentinel-report-{project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-…</span>
+        </span>
+      </div>
+
       {attackers.length === 0 ? (
         <div className="rounded-xl border border-sentinel-border bg-sentinel-panel p-6 text-sm text-sentinel-muted">
           No hits yet. Once your trap URL or beacon receives traffic, attackers
