@@ -15,6 +15,8 @@ export interface LiveFeedItem {
   route: string | null;
   message: string;
   createdAt: number;
+  projectId: string | null;
+  projectName: string | null;
   geo: {
     country: string | null;
     countryCode: string | null;
@@ -69,6 +71,9 @@ export async function GET(req: Request): Promise<NextResponse> {
   const items: (LiveFeedItem & { coords: { lat: number; lon: number } | null })[] =
     events.map((e) => {
       const geo = e.ip ? geoMap.get(e.ip) : undefined;
+      const meta = e.metadata ?? {};
+      const projectId = typeof meta.projectId === "string" ? meta.projectId : null;
+      const projectName = typeof meta.projectName === "string" ? meta.projectName : null;
       return {
         id: e.id,
         type: e.type,
@@ -77,6 +82,8 @@ export async function GET(req: Request): Promise<NextResponse> {
         route: e.route,
         message: e.message,
         createdAt: e.createdAt,
+        projectId,
+        projectName,
         geo: geo
           ? {
               country: geo.country,

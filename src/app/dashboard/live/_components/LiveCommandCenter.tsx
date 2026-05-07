@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { LiveFeedItem } from "@/app/api/live/feed/route";
 import { LiveStatsGrid } from "./LiveStatsGrid";
+import { ProjectFilterBar } from "./ProjectFilterBar";
 import { LiveFeed } from "./LiveFeed";
 import { WorldMap } from "./WorldMap";
 import { HoneypotSessions } from "./HoneypotSessions";
@@ -43,6 +44,21 @@ const POLL_STATS = 5_000;
 export function LiveCommandCenter(): React.ReactElement {
   const [stats, setStats] = useState<LiveStats | null>(null);
   const [items, setItems] = useState<FeedItemWithCoords[]>([]);
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+
+  const liveCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const it of items) {
+      if (it.projectId) map[it.projectId] = (map[it.projectId] ?? 0) + 1;
+    }
+    return map;
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    if (selectedProjects.length === 0) return items;
+    const set = new Set(selectedProjects);
+    return items.filter((it) => it.projectId && set.has(it.projectId));
+  }, [items, selectedProjects]);
 
   useEffect(() => {
     let alive = true;
@@ -91,16 +107,24 @@ export function LiveCommandCenter(): React.ReactElement {
       {/* HUD top bar */}
       <TopStatusBar stats={stats} />
 
+      {/* Project filter (1, 2, or 3 projects at once) */}
+      <ProjectFilterBar
+        selected={selectedProjects}
+        onChange={setSelectedProjects}
+        liveCounts={liveCounts}
+        maxSelectable={3}
+      />
+
       {/* KPI strip */}
       <LiveStatsGrid stats={stats} />
 
       {/* Row 1: Operators · Map · Gauge+Scanner */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         <div className="xl:col-span-3">
-          <OperatorsPanel stats={stats} items={items} />
+          <OperatorsPanel stats={stats} items={filteredItems} />
         </div>
         <div className="xl:col-span-6">
-          <WorldMap items={items} />
+          <WorldMap items={filteredItems} />
         </div>
         <div className="flex flex-col gap-4 xl:col-span-3">
           <RiskGauge stats={stats} />
@@ -110,30 +134,30 @@ export function LiveCommandCenter(): React.ReactElement {
 
       {/* Row 2: AI · Live feed · Honeypots */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <AIIntelStrip stats={stats} items={items} />
-        <LiveFeed items={items} />
-        <HoneypotSessions items={items} />
+        <AIIntelStrip stats={stats} items={filteredItems} />
+        <LiveFeed items={filteredItems} />
+        <HoneypotSessions items={filteredItems} />
       </div>
 
       {/* Row 3: Timeline + Heatmap */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <AttackTimeline items={items} />
-        <HeatmapGrid items={items} />
+        <AttackTimeline items={filteredItems} />
+        <HeatmapGrid items={filteredItems} />
       </div>
 
       {/* Row 3.5: Suspicious IP Tracker (full width) */}
-      <SuspiciousIpTracker items={items} />
+      <SuspiciousIpTracker items={filteredItems} />
 
       {/* Row 4: Terminal + Incident Response */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <TerminalConsole items={items} />
+          <TerminalConsole items={filteredItems} />
         </div>
-        <IncidentResponsePanel stats={stats} items={items} />
+        <IncidentResponsePanel stats={stats} items={filteredItems} />
       </div>
 
       {/* Floating alerts */}
-      <FloatingAlerts items={items} />
+      <FloatingAlerts items={filteredItems} />
     </div>
   );
 }
