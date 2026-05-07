@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { recordSecurityEvent } from "@/lib/server/events";
 import { bumpProjectHits, findProjectById } from "@/lib/server/projects";
+import { isIpBlocked } from "@/lib/server/blocklist";
 import { getRequestIp, getRequestUserAgent } from "@/lib/server/request";
 
 export const runtime = "nodejs";
@@ -126,6 +127,9 @@ export async function GET(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   if (!project) {
     return new NextResponse("Not found", { status: 404 });
   }
+  if (await isIpBlocked(getRequestIp(req))) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
   const errored = req.nextUrl.searchParams.get("err") === "1";
   // Fire-and-forget so render is fast.
   logHit(req, id, null).catch(() => {});
@@ -142,6 +146,9 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   const project = await findProjectById(id);
   if (!project) {
     return new NextResponse("Not found", { status: 404 });
+  }
+  if (await isIpBlocked(getRequestIp(req))) {
+    return new NextResponse("Forbidden", { status: 403 });
   }
   let username = "";
   let password = "";

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { recordSecurityEvent } from "@/lib/server/events";
 import { bumpProjectHits, findProjectByApiKey } from "@/lib/server/projects";
+import { isIpBlocked } from "@/lib/server/blocklist";
 import { getRequestIp, getRequestUserAgent } from "@/lib/server/request";
 import type { BeaconPayload, ThreatSeverity } from "@/lib/types";
 
@@ -104,6 +105,14 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   const ip = (body.ip ?? getRequestIp(req))?.toString().slice(0, 64) ?? null;
+  if (await isIpBlocked(ip)) {
+    return withCors(
+      NextResponse.json(
+        { ok: false, error: "ip_blocked" },
+        { status: 403 },
+      ),
+    );
+  }
   const userAgent =
     (body.userAgent ?? getRequestUserAgent(req))?.toString().slice(0, 400) ??
     null;

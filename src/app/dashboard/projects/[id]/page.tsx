@@ -4,8 +4,10 @@ import { requireSessionUser } from "@/lib/server/session";
 import { findProjectById } from "@/lib/server/projects";
 import { listEventsForProject } from "@/lib/server/events";
 import { getGeoForIps } from "@/lib/server/geoip";
+import { listBlockedIps } from "@/lib/server/blocklist";
 import { SeverityBadge } from "@/app/dashboard/_components/SeverityBadge";
 import { TimeAgo } from "@/app/dashboard/_components/TimeAgo";
+import { BlockIpButton } from "@/app/dashboard/projects/_components/BlockIpButton";
 import type { SecurityEvent } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -77,7 +79,11 @@ export default async function ProjectDetailPage(
   const events = await listEventsForProject(id, 500);
   const attackers = summarizeAttackers(events);
   const ips = attackers.map((a) => a.ip);
-  const geo = await getGeoForIps(ips);
+  const [geo, blocks] = await Promise.all([
+    getGeoForIps(ips),
+    listBlockedIps(),
+  ]);
+  const blockedSet = new Set(blocks.map((b) => b.ip));
 
   return (
     <div className="space-y-8">
@@ -128,6 +134,7 @@ export default async function ProjectDetailPage(
                   <th className="px-4 py-3">Routes touched</th>
                   <th className="px-4 py-3">First seen</th>
                   <th className="px-4 py-3">Last seen</th>
+                  <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-sentinel-border/60">
@@ -181,6 +188,13 @@ export default async function ProjectDetailPage(
                       </td>
                       <td className="px-4 py-2 text-xs text-sentinel-muted">
                         <TimeAgo timestamp={a.lastSeenAt} />
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        <BlockIpButton
+                          ip={a.ip}
+                          reason={`From project ${project.name}`}
+                          initiallyBlocked={blockedSet.has(a.ip)}
+                        />
                       </td>
                     </tr>
                   );
