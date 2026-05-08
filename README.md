@@ -1,159 +1,85 @@
 # Bulletproof Sentinel AI
 
-Autonomous AI Cyber Defense Copilot — Phase 1 (MVP Foundation).
+An autonomous AI cyber defense platform that detects, deceives, and documents attackers in real time.
 
-Stack: **Next.js 15 (App Router) · TypeScript (strict) · Tailwind CSS · Firebase Auth + Firestore · Vercel**.
+Stack: **Next.js 15 (App Router), TypeScript, Tailwind CSS, Firebase Auth, Firestore, Vercel.**
 
 ## Introducing Bulletproof Sentinel AI
 
-I'm proud to introduce **Bulletproof Sentinel AI** — a project I designed and built from the ground up: an autonomous, AI-assisted cyber defense platform that detects, deceives, and documents attackers in real time.
+I am proud to introduce **Bulletproof Sentinel AI**, a project I designed and built from the ground up. It is a modern security platform that catches attackers in the act, records what they do, and helps the operator respond fast.
 
 ### Why I built it myself
 
-Most off-the-shelf security tools have a serious weakness: **attackers already know them inside out.** Open-source honeypots, default IDS rules, and well-known WAFs all leave fingerprints — banner strings, response timings, predictable file paths, signature behaviors — and modern adversaries are trained to detect, fingerprint, and evade them within seconds. Once a hacker recognizes the trap, they walk around it.
+Most security tools you can download today have one big problem. Attackers already know how they work. Public honeypots, default firewall rules, and well known scanners all leave small clues that experienced hackers learn to spot in seconds. Once they recognize the tool, they simply walk around it.
 
-Bulletproof Sentinel AI was built to solve exactly that problem:
-
-- **Custom-built decoys** that don't match any public honeypot signature, so attackers can't fingerprint and skip them.
-- **Custom telemetry pipeline** — events go directly to Firestore via signed server routes, with no third-party agent that could leak the stack.
-- **AI-driven analysis** that interprets raw events the way an analyst would, not the way a static rule engine would, so novel attack patterns aren't ignored.
-- **Operator-first UX** designed around what defenders actually need during an incident: a live console, severity-ranked alerts, and one-click context.
+I built Bulletproof Sentinel AI to fix that. Because the code, the decoys, and the detection logic are all custom, attackers cannot rely on the usual tricks to bypass it.
 
 ### What it does
 
-- **Catches attackers in the act** through realistic decoys (fake admin portals, fake WordPress logins, decoy APIs) that look like real production targets.
-- **Logs every interaction** — IP, user agent, geo, payload, timing — into a tamper-evident event store.
-- **Generates real-time alerts** with severity scoring so the operator only focuses on what matters.
-- **Uses AI to explain incidents**, map them to MITRE ATT&CK techniques, and suggest defensive actions.
-- **Provides a live operations console** so defenders can watch attacks unfold the moment they begin.
+* Catches attackers using realistic decoys that look like real production systems.
+* Records every interaction, including IP address, browser fingerprint, location, and timing.
+* Generates real time alerts and ranks them by severity so the operator focuses on what matters.
+* Uses AI to explain incidents in plain language and suggest the right defensive action.
+* Provides a live operations console so defenders can watch attacks unfold the moment they begin.
 
-### Who it's for
+### Who it is for
 
-Security engineers, SOC analysts, indie developers protecting their own apps, and small teams that need enterprise-grade detection without enterprise-grade headcount or licensing.
+Security engineers, SOC analysts, indie developers protecting their own apps, and small teams that need strong detection without paying for a heavy enterprise platform.
 
-This is more than a portfolio project — it's a working defensive platform built on the principle that **the best security tools are the ones attackers haven't seen before.**
+This is more than a portfolio project. It is a working defensive tool built on a simple idea: the best security tools are the ones attackers have not seen before.
 
 ## Screenshots
 
 <p align="center">
   <img src="Live%20Console.png" alt="Live Console" width="100%" />
-  <br/><em>Live Console — real-time stream of security events and incoming attack traffic.</em>
+  <br/><em>Live Console: real time stream of security events.</em>
 </p>
 
-**About this view:** The Live Console is the operator's situational-awareness screen. Every authentication attempt, honeypot hit, and API probe is pushed in real time so defenders can watch attacks unfold as they happen. Each row shows the source IP, user agent, target route, severity, and timestamp, making it easy to spot bursts, brute-force patterns, or coordinated scans the instant they start.
+**About this view:** The Live Console is the operator’s main screen. Every login attempt, every probe, and every honeypot hit shows up the moment it happens. Each row tells you who is knocking, where they are coming from, what they are trying to reach, and how serious it looks. It is the fastest way to spot an attack while it is still in progress.
 
 ---
 
 <p align="center">
   <img src="Honeypot.png" alt="Honeypot Dashboard" width="100%" />
-  <br/><em>Honeypot Dashboard — deployed traps, hit counters, and attacker telemetry.</em>
+  <br/><em>Honeypot Dashboard: deployed traps and attacker activity.</em>
 </p>
 
-**About this view:** The Honeypot Dashboard is the control center for all deployed decoys. It lists every active trap (fake admin portal, decoy API, hidden WP login, etc.), how many times each has been triggered, and which attackers interacted with them. This gives a clear, measurable signal of malicious intent — only someone probing where they shouldn't would ever land on these endpoints.
+**About this view:** The Honeypot Dashboard is the control room for all the decoys. It shows which traps are active, how many times each one has been triggered, and who interacted with them. Anyone who lands here is doing something they should not be doing, so this view gives a very clean signal of real malicious intent.
 
 ---
 
 <p align="center">
   <img src="Fake%20Admin%20Panel.png" alt="Fake Admin Panel" width="100%" />
-  <br/><em>Fake Admin Panel — decoy login that lures and logs unauthorized access attempts.</em>
+  <br/><em>Fake Admin Panel: a decoy login built to attract attackers.</em>
 </p>
 
-**About this view:** This is one of the deployed honeypots — a convincing fake admin login page designed to attract attackers, scanners, and credential-stuffing bots. Any submission is captured (without ever authenticating anyone) and forwarded to the event pipeline, instantly generating a high-severity alert with the attacker's IP, user agent, and the credentials they tried to use.
+**About this view:** This is one of the deployed decoys. It looks like a normal admin login page, but no one can ever sign in. Every attempt is captured, the attacker’s details are recorded, and a high severity alert is created right away. It is a safe and effective way to learn who is targeting the system and how.
 
 ---
 
 <p align="center">
   <img src="Fake%20Word-Press%20page.png" alt="Fake WordPress Page" width="100%" />
-  <br/><em>Fake WordPress Login — classic <code>/wp-login</code> trap to catch automated scanners.</em>
+  <br/><em>Fake WordPress Login: a trap designed to catch automated scanners.</em>
 </p>
 
-**About this view:** A pixel-faithful WordPress login decoy served from `/wp-login`. Automated scanners and botnets constantly hammer this path across the internet, so any hit here is a near-guaranteed indicator of malicious activity. The trap silently logs the attempt, fingerprints the client, and feeds the data into the Alert Center for triage.
+**About this view:** This decoy looks exactly like a normal WordPress login page. Automated bots scan the internet for these every day, so any visitor here is almost certainly a scanner or an attacker. The trap quietly logs the attempt, fingerprints the visitor, and sends the data to the alert center for review.
 
-## Phase 1 Features
+## Summary of what is built
 
-- Firebase Authentication (email + password) with secure HTTP-only **session cookies** (signed via Firebase Admin).
-- **Security Dashboard** — overview, stats, recent events, active alerts.
-- **Event Logging System** — every auth attempt and honeypot trigger is persisted to Firestore.
-- **Basic Honeypot Engine** — fake admin portal, fake API endpoint, hidden WP login route. Hits are recorded and counted.
-- **Alert Center** — high/critical events automatically generate alerts that can be acknowledged.
-- Route protection via Next.js middleware.
+The platform currently includes:
 
-## Project Structure
+* Secure user authentication with session cookies.
+* A protected security dashboard with stats, recent events, and active alerts.
+* A full event logging system that records every meaningful action.
+* A custom honeypot engine with several realistic decoys.
+* An alert center where high and critical events can be reviewed and acknowledged.
+* AI assisted analysis that helps explain incidents and recommend next steps.
+* A live operations console for real time monitoring.
 
-```
-src/
-  app/
-    (auth)/login, (auth)/signup        # Auth pages (client)
-    api/
-      auth/session                     # POST: create session cookie, DELETE: sign out
-      events                           # GET recent events
-      alerts                           # GET / PATCH alerts
-      honeypots                        # GET deployed traps
-      honeypot/v1/users                # Decoy API endpoint
-    honeypot/admin                     # Decoy admin login page
-    honeypot/wp-login                  # Decoy WP login page
-    dashboard/                         # Protected dashboard (overview, events, honeypots, alerts)
-  lib/
-    firebase/client.ts                 # Web SDK
-    firebase/admin.ts                  # Admin SDK (server-only)
-    server/session.ts                  # Session cookie helpers
-    server/events.ts                   # Event + alert persistence
-    server/honeypots.ts                # Trap registry + trigger recorder
-    server/request.ts                  # IP / UA helpers
-    types.ts                           # Shared TypeScript types
-  middleware.ts                        # /dashboard auth gate
-```
+## Status
 
-## Setup
+The platform is actively being developed. New detection features, response actions, and integrations are added on a regular basis.
 
-1. Create a Firebase project. Enable **Authentication → Email/Password** and **Firestore**.
-2. Copy `.env.example` to `.env.local` and fill in:
-   - `NEXT_PUBLIC_FIREBASE_*` from your Firebase web app config.
-   - `FIREBASE_SERVICE_ACCOUNT_JSON` — paste the entire service account JSON as a single line. The `private_key` newlines can stay as `\n` (the loader unescapes them).
-3. Install deps and run dev:
-   ```bash
-   npm install
-   npm run dev
-   ```
+## Contact
 
-## Firestore Collections (auto-created)
-
-- `security_events` — `{ id, type, severity, ip, userAgent, route, message, metadata, createdAt, ownerUid }`
-- `alerts` — `{ id, title, severity, source, createdAt, acknowledged, eventId }`
-- `honeypots` — seeded on first read with three default traps.
-
-## Suggested Firestore Rules
-
-All writes happen via the Admin SDK in API routes, so client writes can be denied:
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{db}/documents {
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-```
-
-## Vercel Deployment
-
-1. Push to GitHub.
-2. Import the repo on Vercel.
-3. Add the same environment variables (mark `FIREBASE_SERVICE_ACCOUNT_JSON` as **Sensitive**).
-4. Deploy. No additional firewall configuration required — Vercel handles TLS at the edge.
-
-## Try the Honeypots
-
-After signing in, visit any of these URLs (in another browser or while signed out) — each hit records a high-severity event and creates an alert:
-
-- `/honeypot/admin`
-- `/honeypot/wp-login`
-- `/api/honeypot/v1/users`
-
-Then return to the dashboard to see events and alerts populate.
-
-## Next Phases
-
-See `prd.md` for the full roadmap. Phase 2 introduces the Vulnerability Scanner, Security Header Analyzer, Threat Scoring Engine, and GeoIP tracking.
+For questions, collaboration, or a demo, reach out through GitHub or LinkedIn.
