@@ -1,18 +1,18 @@
-# Bulletproof Sentinel AI
+# Bulletproof Sentinel
 
 An autonomous AI cyber defense platform that detects, deceives, and documents attackers in real time.
 
 Stack: **Next.js 15 (App Router), TypeScript, Tailwind CSS, Firebase Auth, Firestore, Vercel.**
 
-## Introducing Bulletproof Sentinel AI
+## Introducing Bulletproof Sentinel
 
-I am proud to introduce **Bulletproof Sentinel AI**, a project I designed and built from the ground up. It is a modern security platform that catches attackers in the act, records what they do, and helps the operator respond fast.
+I am proud to introduce **Bulletproof Sentinel**, a project I designed and built from the ground up. It is a modern security platform that catches attackers in the act, records what they do, and helps the operator respond fast.
 
 ### Why I built it myself
 
 Most security tools you can download today have one big problem. Attackers already know how they work. Public honeypots, default firewall rules, and well known scanners all leave small clues that experienced hackers learn to spot in seconds. Once they recognize the tool, they simply walk around it.
 
-I built Bulletproof Sentinel AI to fix that. Because the code, the decoys, and the detection logic are all custom, attackers cannot rely on the usual tricks to bypass it.
+I built Bulletproof Sentinel to fix that. Because the code, the decoys, and the detection logic are all custom, attackers cannot rely on the usual tricks to bypass it.
 
 ### What it does
 
