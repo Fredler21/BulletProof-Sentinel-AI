@@ -4,6 +4,42 @@ Autonomous AI Cyber Defense Copilot — Phase 1 (MVP Foundation).
 
 Stack: **Next.js 15 (App Router) · TypeScript (strict) · Tailwind CSS · Firebase Auth + Firestore · Vercel**.
 
+## Screenshots
+
+<p align="center">
+  <img src="Live%20Console.png" alt="Live Console" width="100%" />
+  <br/><em>Live Console — real-time stream of security events and incoming attack traffic.</em>
+</p>
+
+**About this view:** The Live Console is the operator's situational-awareness screen. Every authentication attempt, honeypot hit, and API probe is pushed in real time so defenders can watch attacks unfold as they happen. Each row shows the source IP, user agent, target route, severity, and timestamp, making it easy to spot bursts, brute-force patterns, or coordinated scans the instant they start.
+
+---
+
+<p align="center">
+  <img src="Honeypot.png" alt="Honeypot Dashboard" width="100%" />
+  <br/><em>Honeypot Dashboard — deployed traps, hit counters, and attacker telemetry.</em>
+</p>
+
+**About this view:** The Honeypot Dashboard is the control center for all deployed decoys. It lists every active trap (fake admin portal, decoy API, hidden WP login, etc.), how many times each has been triggered, and which attackers interacted with them. This gives a clear, measurable signal of malicious intent — only someone probing where they shouldn't would ever land on these endpoints.
+
+---
+
+<p align="center">
+  <img src="Fake%20Admin%20Panel.png" alt="Fake Admin Panel" width="100%" />
+  <br/><em>Fake Admin Panel — decoy login that lures and logs unauthorized access attempts.</em>
+</p>
+
+**About this view:** This is one of the deployed honeypots — a convincing fake admin login page designed to attract attackers, scanners, and credential-stuffing bots. Any submission is captured (without ever authenticating anyone) and forwarded to the event pipeline, instantly generating a high-severity alert with the attacker's IP, user agent, and the credentials they tried to use.
+
+---
+
+<p align="center">
+  <img src="Fake%20Word-Press%20page.png" alt="Fake WordPress Page" width="100%" />
+  <br/><em>Fake WordPress Login — classic <code>/wp-login</code> trap to catch automated scanners.</em>
+</p>
+
+**About this view:** A pixel-faithful WordPress login decoy served from `/wp-login`. Automated scanners and botnets constantly hammer this path across the internet, so any hit here is a near-guaranteed indicator of malicious activity. The trap silently logs the attempt, fingerprints the client, and feeds the data into the Alert Center for triage.
+
 ## Phase 1 Features
 
 - Firebase Authentication (email + password) with secure HTTP-only **session cookies** (signed via Firebase Admin).
