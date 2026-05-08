@@ -2,11 +2,13 @@
 
 <p align="left">
   <img alt="Cybersecurity" src="https://img.shields.io/badge/Cybersecurity-FF1E1E?style=for-the-badge&logo=hackthebox&logoColor=white" />
-  <img alt="Privacy" src="https://img.shields.io/badge/Privacy-2D2D2D?style=for-the-badge&logo=protonmail&logoColor=white" />
-  <img alt="Python" src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
-  <img alt="Linux" src="https://img.shields.io/badge/Linux-000000?style=for-the-badge&logo=linux&logoColor=white" />
   <img alt="Honeypot" src="https://img.shields.io/badge/Honeypot-FFB000?style=for-the-badge&logo=cachet&logoColor=black" />
-  <img alt="Multilingual" src="https://img.shields.io/badge/Multilingual-4B8BBE?style=for-the-badge&logo=googletranslate&logoColor=white" />
+  <img alt="Privacy" src="https://img.shields.io/badge/Privacy-2D2D2D?style=for-the-badge&logo=protonmail&logoColor=white" />
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js%2015-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
+  <img alt="Firebase" src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" />
+  <img alt="Vercel" src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" />
   <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-4CAF50?style=for-the-badge" />
 </p>
 
