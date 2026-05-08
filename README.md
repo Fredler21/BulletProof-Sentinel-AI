@@ -1,5 +1,15 @@
 # Bulletproof Sentinel
 
+<p align="left">
+  <img alt="Cybersecurity" src="https://img.shields.io/badge/Cybersecurity-FF1E1E?style=for-the-badge&logo=hackthebox&logoColor=white" />
+  <img alt="Privacy" src="https://img.shields.io/badge/Privacy-2D2D2D?style=for-the-badge&logo=protonmail&logoColor=white" />
+  <img alt="Python" src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img alt="Linux" src="https://img.shields.io/badge/Linux-000000?style=for-the-badge&logo=linux&logoColor=white" />
+  <img alt="Honeypot" src="https://img.shields.io/badge/Honeypot-FFB000?style=for-the-badge&logo=cachet&logoColor=black" />
+  <img alt="Multilingual" src="https://img.shields.io/badge/Multilingual-4B8BBE?style=for-the-badge&logo=googletranslate&logoColor=white" />
+  <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-4CAF50?style=for-the-badge" />
+</p>
+
 A modern cyber defense platform that detects, deceives, and documents attackers in real time.
 
 Stack: **Next.js 15 (App Router), TypeScript, Tailwind CSS, Firebase Auth, Firestore, Vercel.**
@@ -83,3 +93,7 @@ The platform is actively being developed. New detection features, response actio
 ## Contact
 
 For questions, collaboration, or a demo, reach out through GitHub or LinkedIn.
+
+## License
+
+This project is released under the **MIT License**. See the [LICENSE](LICENSE) file for the full text.
