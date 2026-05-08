@@ -1,21 +1,39 @@
-MIT License
+Bulletproof Sentinel — Proprietary License
 
-Copyright (c) 2026 Fredler
+Copyright (c) 2026 Fredler. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This software and its source code (the "Software") are the exclusive property
+of the copyright holder. The Software is made publicly viewable for
+demonstration, portfolio, and educational reference purposes only.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+NO LICENSE IS GRANTED. Without the prior written permission of the copyright
+holder, no person or entity is authorized to:
+
+  1. Use the Software, in whole or in part, in any production, commercial,
+     personal, academic, research, or non-commercial environment.
+  2. Copy, reproduce, fork, mirror, redistribute, sublicense, sell, rent,
+     lease, or otherwise transfer the Software or any portion of it.
+  3. Modify, adapt, translate, port, merge, or create derivative works based
+     on the Software.
+  4. Reverse engineer, decompile, disassemble, or attempt to derive the
+     source code of any compiled or hosted instance of the Software.
+  5. Use the Software, its design, its architecture, or any portion of its
+     code to train, fine-tune, evaluate, or benchmark any machine learning
+     or artificial intelligence system.
+  6. Remove, alter, or obscure any copyright, trademark, attribution, or
+     other proprietary notices contained in the Software.
+
+Viewing the source code on a public hosting platform (such as GitHub) does
+not grant any of the rights listed above and does not constitute a license,
+express or implied.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHOR OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING
+FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+For licensing inquiries, partnerships, or commercial use, please contact the
+copyright holder through GitHub or LinkedIn.

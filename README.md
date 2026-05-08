@@ -10,7 +10,7 @@
   <img alt="Firebase" src="https://img.shields.io/badge/Firebase-0F172A?style=flat-square&logo=firebase&logoColor=FFCA28&labelColor=0F172A" />
   <img alt="Vercel" src="https://img.shields.io/badge/Vercel-0F172A?style=flat-square&logo=vercel&logoColor=white&labelColor=0F172A" />
   <img alt="Status" src="https://img.shields.io/badge/Status-Active-22C55E?style=flat-square&labelColor=0F172A" />
-  <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-A78BFA?style=flat-square&labelColor=0F172A" />
+  <img alt="License: Proprietary" src="https://img.shields.io/badge/License-Proprietary-EF4444?style=flat-square&labelColor=0F172A" />
 </p>
 
 A modern cyber defense platform that detects, deceives, and documents attackers in real time.
@@ -99,4 +99,8 @@ For questions, collaboration, or a demo, reach out through GitHub or LinkedIn.
 
 ## License
 
-This project is released under the **MIT License**. See the [LICENSE](LICENSE) file for the full text.
+**Proprietary — All Rights Reserved.**
+
+The source code is published for demonstration and portfolio purposes only. It may **not** be copied, forked, redistributed, modified, or used in any product or environment without prior written permission from the author. See the [LICENSE](LICENSE) file for the full terms.
+
+For commercial use, partnerships, or licensing requests, please reach out through GitHub or LinkedIn.
