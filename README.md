@@ -1,15 +1,16 @@
 # Bulletproof Sentinel
 
 <p align="left">
-  <img alt="Cybersecurity" src="https://img.shields.io/badge/Cybersecurity-FF1E1E?style=for-the-badge&logo=hackthebox&logoColor=white" />
-  <img alt="Honeypot" src="https://img.shields.io/badge/Honeypot-FFB000?style=for-the-badge&logo=cachet&logoColor=black" />
-  <img alt="Privacy" src="https://img.shields.io/badge/Privacy-2D2D2D?style=for-the-badge&logo=protonmail&logoColor=white" />
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js%2015-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" />
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
-  <img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
-  <img alt="Firebase" src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" />
-  <img alt="Vercel" src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" />
-  <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-4CAF50?style=for-the-badge" />
+  <img alt="Cybersecurity" src="https://img.shields.io/badge/Cybersecurity-0F172A?style=flat-square&logo=hackthebox&logoColor=9BE15D&labelColor=0F172A" />
+  <img alt="Honeypot" src="https://img.shields.io/badge/Honeypot-1E1B4B?style=flat-square&logo=hackaday&logoColor=FBBF24&labelColor=1E1B4B" />
+  <img alt="Privacy" src="https://img.shields.io/badge/Privacy%20First-0F172A?style=flat-square&logo=tor-project&logoColor=A78BFA&labelColor=0F172A" />
+  <img alt="Next.js 15" src="https://img.shields.io/badge/Next.js%2015-0F172A?style=flat-square&logo=nextdotjs&logoColor=white&labelColor=0F172A" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-0F172A?style=flat-square&logo=typescript&logoColor=3B82F6&labelColor=0F172A" />
+  <img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind%20CSS-0F172A?style=flat-square&logo=tailwindcss&logoColor=38BDF8&labelColor=0F172A" />
+  <img alt="Firebase" src="https://img.shields.io/badge/Firebase-0F172A?style=flat-square&logo=firebase&logoColor=FFCA28&labelColor=0F172A" />
+  <img alt="Vercel" src="https://img.shields.io/badge/Vercel-0F172A?style=flat-square&logo=vercel&logoColor=white&labelColor=0F172A" />
+  <img alt="Status" src="https://img.shields.io/badge/Status-Active-22C55E?style=flat-square&labelColor=0F172A" />
+  <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-A78BFA?style=flat-square&labelColor=0F172A" />
 </p>
 
 A modern cyber defense platform that detects, deceives, and documents attackers in real time.
