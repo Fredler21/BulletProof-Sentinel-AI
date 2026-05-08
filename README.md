@@ -4,6 +4,35 @@ Autonomous AI Cyber Defense Copilot — Phase 1 (MVP Foundation).
 
 Stack: **Next.js 15 (App Router) · TypeScript (strict) · Tailwind CSS · Firebase Auth + Firestore · Vercel**.
 
+## Introducing Bulletproof Sentinel AI
+
+I'm proud to introduce **Bulletproof Sentinel AI** — a project I designed and built from the ground up: an autonomous, AI-assisted cyber defense platform that detects, deceives, and documents attackers in real time.
+
+### Why I built it myself
+
+Most off-the-shelf security tools have a serious weakness: **attackers already know them inside out.** Open-source honeypots, default IDS rules, and well-known WAFs all leave fingerprints — banner strings, response timings, predictable file paths, signature behaviors — and modern adversaries are trained to detect, fingerprint, and evade them within seconds. Once a hacker recognizes the trap, they walk around it.
+
+Bulletproof Sentinel AI was built to solve exactly that problem:
+
+- **Custom-built decoys** that don't match any public honeypot signature, so attackers can't fingerprint and skip them.
+- **Custom telemetry pipeline** — events go directly to Firestore via signed server routes, with no third-party agent that could leak the stack.
+- **AI-driven analysis** that interprets raw events the way an analyst would, not the way a static rule engine would, so novel attack patterns aren't ignored.
+- **Operator-first UX** designed around what defenders actually need during an incident: a live console, severity-ranked alerts, and one-click context.
+
+### What it does
+
+- **Catches attackers in the act** through realistic decoys (fake admin portals, fake WordPress logins, decoy APIs) that look like real production targets.
+- **Logs every interaction** — IP, user agent, geo, payload, timing — into a tamper-evident event store.
+- **Generates real-time alerts** with severity scoring so the operator only focuses on what matters.
+- **Uses AI to explain incidents**, map them to MITRE ATT&CK techniques, and suggest defensive actions.
+- **Provides a live operations console** so defenders can watch attacks unfold the moment they begin.
+
+### Who it's for
+
+Security engineers, SOC analysts, indie developers protecting their own apps, and small teams that need enterprise-grade detection without enterprise-grade headcount or licensing.
+
+This is more than a portfolio project — it's a working defensive platform built on the principle that **the best security tools are the ones attackers haven't seen before.**
+
 ## Screenshots
 
 <p align="center">
