@@ -1,6 +1,6 @@
 # Bulletproof Sentinel
 
-An autonomous AI cyber defense platform that detects, deceives, and documents attackers in real time.
+A modern cyber defense platform that detects, deceives, and documents attackers in real time.
 
 Stack: **Next.js 15 (App Router), TypeScript, Tailwind CSS, Firebase Auth, Firestore, Vercel.**
 
